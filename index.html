@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR4Shopping - Local Offers</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; padding: 20px; text-align: center; color: #1c1e21; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .offer-card { border-left: 6px solid #007bff; text-align: left; padding: 15px; margin: 15px 0; }
+        .offer-card strong { display: block; font-size: 1.2em; color: #007bff; margin-bottom: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 16px 32px; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.2s; }
+        button:hover { background: #0056b3; }
+        #status { margin-top: 15px; color: #65676b; font-size: 14px; }
+        .hidden { display: none; }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #007bff; }
+        .city-badge { background: #e7f3ff; color: #007bff; padding: 5px 15px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="welcome-screen">
+            <div class="card">
+                <h1>PR4Shopping</h1>
+                <p>Arrive at any participating Park & Ride to unlock local business offers!</p>
+                <button onclick="checkLocation()">Find Offers Near Me</button>
+                <p id="status"></p>
+            </div>
+        </div>
+
+        <div id="offer-screen" class="hidden">
+            <div id="city-header"></div>
+            <div id="offer-list"></div>
+            <button style="background: #6c757d; margin-top: 20px;" onclick="location.reload()">Reset / Search Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // Paste your Google Web App URL (the one ending in /exec) inside the quotes below:
+        const APP_URL = "https://script.google.com/macros/s/AKfycbw-K5LoDSqnQr66TF_lyP1n36yqla3H0K2LD7e17zRob9viMPAZ0vPMkiZyk7iDWVevYQ/exec"; 
+
+        function checkLocation() {
+            const status = document.getElementById('status');
+            status.innerText = "Accessing GPS...";
+
+            if (!navigator.geolocation) {
+                status.innerText = "Error: Geolocation not supported by this browser.";
+                return;
+            }
+
+            // Ask the phone for the coordinates
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    status.innerText = "GPS Found! Checking spreadsheets...";
+                    fetchOffersFromGoogle(lat, lon);
+                },
+                (error) => {
+                    status.innerText = "Permission Denied. Please enable Location Services in your settings.";
+                    console.error(error);
+                }
+            );
+        }
+
+        async function fetchOffersFromGoogle(lat, lon) {
+            const status = document.getElementById('status');
+            try {
+                // This sends the Lat/Lon to your Google Script
+                const response = await fetch(`${APP_URL}?lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    showOffers(data);
+                } else {
+                    // This happens if you aren't within the 'Distance' set in the spreadsheet
+                    status.innerText = "No Site Found: " + data.message;
+                }
+            } catch (err) {
+                status.innerText = "Network Error: Could not connect to the engine.";
+                console.error(err);
+            }
+        }
+
+        function showOffers(data) {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('offer-screen').classList.remove('hidden');
+            
+            // Show the City and Site Name
+            document.getElementById('city-header').innerHTML = `
+                <div class="city-badge">${data.city}</div>
+                <h2>${data.site}</h2>
+                <p>The following offers are available today:</p>
+            `;
+            
+            const list = document.getElementById('offer-list');
+            list.innerHTML = "";
+            
+            // Loop through the offers from the 'Business Data' spreadsheet
+            if (data.offers.length === 0) {
+                list.innerHTML = "<div class='card'>No active offers for this city right now.</div>";
+            } else {
+                data.offers.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "card offer-card";
+                    div.innerHTML = `<strong>${item.business}</strong>${item.offer}`;
+                    list.appendChild(div);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
