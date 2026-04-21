@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR4Shopping - Business Registration</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #000; margin-top: 0; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+        .pricing-box { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0061ff; }
+        .pricing-box p { margin: 5px 0; font-size: 0.95em; }
+        button { background-color: #6772e5; color: white; padding: 14px 20px; border: none; border-radius: 6px; width: 100%; font-size: 1.1em; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #5469d4; }
+        .footer-note { font-size: 0.8em; color: #666; text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Business Registration</h2>
+    <p>Join the PR4Shopping network today for just £1.00.</p>
+    
+    <form id="registration-form">
+        <label for="businessName">Business Name</label>
+        <input type="text" id="businessName" placeholder="The Blue Lion" required>
+
+        <label for="email">Contact Email</label>
+        <input type="email" id="email" placeholder="owner@business.com" required>
+
+        <label for="category">Business Category</label>
+        <select id="category" onchange="updatePricing()">
+            <option value="Coffee & Quick Bite">Coffee & Quick Bite</option>
+            <option value="Everyday Shopping">Everyday Shopping</option>
+            <option value="Dining & Drinks">Dining & Drinks</option>
+            <option value="Experience & Leisure">Experience & Leisure</option>
+        </select>
+
+        <div class="pricing-box" id="priceDisplay">
+            <p><strong>Fee per customer:</strong> £0.50</p>
+            <p><strong>Monthly Cap:</strong> £25.00</p>
+        </div>
+
+        <button type="submit" id="checkout-button">Pay £1.00 & Register</button>
+    </form>
+</div>
+
+<p class="footer-note">Securely processed by Stripe. Your card will be stored for future referral fees starting in 12 months.</p>
+
+<script>
+    const stripe = Stripe('pk_test_51TObdeB38pINE1qRGnK9Qs4UHqHCd6oltafYCO5nooyhURwhBq43hxucvcm1Dja8VyBDepcoMYDfH40mhzWdDfbu00sNZttHkw');
+
+    const pricing = {
+        "Coffee & Quick Bite": { fee: "0.50", cap: "25.00" },
+        "Everyday Shopping": { fee: "1.00", cap: "50.00" },
+        "Dining & Drinks": { fee: "1.50", cap: "75.00" },
+        "Experience & Leisure": { fee: "3.00", cap: "100.00" }
+    };
+
+    function updatePricing() {
+        const cat = document.getElementById('category').value;
+        const display = document.getElementById('priceDisplay');
+        display.innerHTML = `
+            <p><strong>Fee per customer:</strong> £${pricing[cat].fee}</p>
+            <p><strong>Monthly Cap:</strong> £${pricing[cat].cap}</p>
+        `;
+    }
+
+    const form = document.getElementById('registration-form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // This is where the magic happens: 
+        // We'll eventually connect this to your Google Apps Script 'Brain'
+        alert("The form is working! We just need to connect your 'Secret Key' to the Google Script next to make the payment live.");
+        
+        // Next Step: We will create the Google Script that handles the 'sk_test' key.
+    });
+</script>
+
+</body>
+</html>
