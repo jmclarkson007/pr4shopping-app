@@ -73,13 +73,22 @@
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // This is where the magic happens: 
-        // We'll eventually connect this to your Google Apps Script 'Brain'
-        alert("The form is working! We just need to connect your 'Secret Key' to the Google Script next to make the payment live.");
+       const scriptURL = 'https://script.google.com/macros/s/AKfycbzh4a2ifwxyLoqX-Lh6OcfQ8_zfCrvLi29te8hZLa9N98dy_EaZodiCbTIyc2DFKHUhCA/exec';
         
-        // Next Step: We will create the Google Script that handles the 'sk_test' key.
-    });
-</script>
-
-</body>
-</html>
+        fetch(scriptURL, { 
+            method: 'POST', 
+            mode: 'no-cors',
+            body: JSON.stringify({
+                businessName: document.getElementById('businessName').value,
+                email: document.getElementById('email').value,
+                category: document.getElementById('category').value,
+                fee: pricing[document.getElementById('category').value].fee,
+                cap: pricing[document.getElementById('category').value].cap,
+                stripeId: "ST-TEST-" + Math.floor(Math.random() * 1000) 
+            })
+        })
+        .then(() => {
+            alert("Success! Your business is registered in the Pending sheet.");
+            form.reset();
+        })
+        .catch(error => console.error('Error!', error.message));
