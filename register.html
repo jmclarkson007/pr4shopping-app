@@ -51,7 +51,7 @@
             <input type="text" id="address1" placeholder="Street and House Number" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group)
             <label>Address Line 2 (Optional)</label>
             <input type="text" id="address2" placeholder="Suite, Unit, etc.">
         </div>
@@ -111,8 +111,8 @@
     form.addEventListener('submit', e => {
         e.preventDefault();
         
-        // This is your Google Script Bridge URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzh4a2ifwxyLoqX-Lh6OcfQ8_zfCrvLi29te8hZLa9N98dy_EaZodiCbTIyc2DFKHUhCA/exec';
+        // YOUR UNIQUE LINK
+        const scriptURL = 'https://script.google.com/macros/s/AKfycby757z-QSrUzKLZt_pNGqALUbPWaXZrjRUWUmDTBPjLsREYEMCrZfmduNzOfWHXz8EqNA/exec';
         
         const formData = {
             businessName: document.getElementById('businessName').value,
@@ -136,7 +136,7 @@
         })
         .then(() => {
             alert("Thank you for registering! Click OK to proceed to secure payment via Stripe.");
-            // This is your temporary test Stripe link
+            // Your payment link
             window.location.href = "https://buy.stripe.com/test_6oE7tB0YV6kX0uc9AA"; 
         })
         .catch(error => alert('Error: ' + error.message));
