@@ -51,19 +51,19 @@
             <input type="text" id="address1" placeholder="Street and House Number" required>
         </div>
 
-        <div class="form-group)
+        <div class="form-group">
             <label>Address Line 2 (Optional)</label>
             <input type="text" id="address2" placeholder="Suite, Unit, etc.">
         </div>
 
         <div class="form-group">
             <label>City</label>
-            <input type="text" id="city" placeholder="e.g. Bath" required>
+            <input type="text" id="city" placeholder="e.g. Camborne" required>
         </div>
 
         <div class="form-group">
             <label>Postcode</label>
-            <input type="text" id="postcode" placeholder="e.g. BA1 1UA" required>
+            <input type="text" id="postcode" placeholder="e.g. TR14 8AE" required>
         </div>
 
         <hr>
@@ -73,8 +73,8 @@
             <select id="category" onchange="updatePrice()">
                 <option value="coffee">Coffee & Quick Bite</option>
                 <option value="dining">Dining & Drinks</option>
-                <option value="retail">Retail & Shopping</option>
-                <option value="services">Professional Services</option>
+                <option value="shopping">Everyday Shopping</option>
+                <option value="leisure">Experience & Leisure</option>
             </select>
         </div>
 
@@ -97,8 +97,8 @@
     const pricing = {
         coffee: { fee: 0.50, cap: 25.00 },
         dining: { fee: 1.50, cap: 75.00 },
-        retail: { fee: 1.00, cap: 50.00 },
-        services: { fee: 2.00, cap: 100.00 }
+        shopping: { fee: 1.00, cap: 50.00 },
+        leisure: { fee: 2.00, cap: 100.00 }
     };
 
     function updatePrice() {
@@ -111,7 +111,6 @@
     form.addEventListener('submit', e => {
         e.preventDefault();
         
-        // YOUR UNIQUE LINK
         const scriptURL = 'https://script.google.com/macros/s/AKfycby757z-QSrUzKLZt_pNGqALUbPWaXZrjRUWUmDTBPjLsREYEMCrZfmduNzOfWHXz8EqNA/exec';
         
         const formData = {
@@ -135,8 +134,7 @@
             body: JSON.stringify(formData)
         })
         .then(() => {
-            alert("Thank you for registering! Click OK to proceed to secure payment via Stripe.");
-            // Your payment link
+            alert("Registration Submitted! Click OK to go to secure payment.");
             window.location.href = "https://buy.stripe.com/test_6oE7tB0YV6kX0uc9AA"; 
         })
         .catch(error => alert('Error: ' + error.message));
