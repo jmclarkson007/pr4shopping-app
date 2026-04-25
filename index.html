@@ -3,129 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PR4Shopping | Local Offers Near You</title>
+    <title>PR4Shopping | Local Offers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* PR4Shopping Brand Colors */
         .logo { font-size: 28px; font-weight: bold; text-decoration: none; font-family: sans-serif; }
         .logo-pr4 { color: #cc0000; }
         .logo-shopping { color: #000; }
-        .offer-card { border-left: 5px solid #cc0000; transition: transform 0.2s; }
+        .offer-card { border-left: 5px solid #cc0000; transition: transform 0.1s; }
         .offer-card:active { transform: scale(0.98); }
-        .loader { border-top-color: #cc0000; animation: spinner 1.5s linear infinite; }
+        
+        /* Loading Animation */
+        .loader { border-top-color: #cc0000; animation: spinner 1s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
-    <header class="bg-white border-b border-gray-200 py-5 px-6 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+    <header class="bg-white border-b border-gray-200 py-6 text-center sticky top-0 z-50 shadow-sm">
         <div class="logo"><span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping</span></div>
-        <div id="gps-indicator" class="flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            <span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Locating...
-        </div>
     </header>
 
-    <main class="flex-grow max-w-lg mx-auto w-full p-4">
+    <main class="flex-grow max-w-lg mx-auto w-full py-10 px-4">
         
-        <div id="status-area" class="mb-8 mt-4">
-            <h2 id="status-heading" class="text-3xl font-black text-gray-900 tracking-tight">Checking Location...</h2>
-            <p id="status-subtext" class="text-gray-500 text-sm">Please allow GPS access to verify your Park & Ride status.</p>
+        <div id="status-area" class="mb-8 text-center">
+            <h2 id="status-heading" class="text-3xl font-black text-gray-900 tracking-tight">Locating...</h2>
+            <p id="status-subtext" class="text-gray-500 text-sm mt-1 font-medium italic">Verifying Park & Ride Status</p>
         </div>
 
         <div id="offer-list" class="space-y-4">
-            <div id="loading-spinner" class="flex flex-col items-center py-20">
-                <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full mb-4"></div>
-                <p class="text-gray-400 text-sm animate-pulse">Syncing with Park & Ride locations...</p>
+            <div id="loading-spinner" class="flex flex-col items-center py-12">
+                <div class="loader w-10 h-10 border-4 border-gray-200 rounded-full mb-3"></div>
+                <p class="text-gray-400 text-xs uppercase tracking-widest font-bold">Checking GPS</p>
             </div>
         </div>
 
     </main>
 
     <footer class="p-8 bg-white border-t border-gray-100 text-center">
-        <p class="text-gray-400 text-xs uppercase tracking-[0.2em] mb-3 font-bold">Business Partners</p>
-        <a href="register.html" class="inline-block bg-black text-white text-xs font-bold py-3 px-6 rounded uppercase tracking-widest hover:bg-gray-800 transition-all">
-            Join the Founding Partner Program
+        <p class="text-gray-400 text-[10px] uppercase tracking-[0.3em] mb-4 font-bold">Business Partners</p>
+        <a href="register.html" class="inline-block bg-black text-white text-xs font-bold py-4 px-10 rounded uppercase tracking-[0.1em] hover:bg-gray-800 transition-all shadow-md">
+            Register a Business Offer
         </a>
+        <p class="mt-6 text-[9px] text-gray-300 uppercase tracking-widest">© 2026 PR4Shopping Network</p>
     </footer>
 
     <script>
-        // CONFIGURATION: Replace these with your actual Google Script Web App URLs
-        const LOCATIONS_API = 'YOUR_PARK_AND_RIDE_SCRIPT_URL'; 
-        const OFFERS_API = 'YOUR_PENDING_REGISTRATIONS_SCRIPT_URL';
+        // YOUR LIVE API LINKS
+        const LOCATIONS_API = 'https://script.google.com/a/macros/perimetrfilms.com/s/AKfycbx0rge18TLs_Uxs28TM8WzVdTLSjt_mVju0WD1DPM1gqPGS_2mJjWe_VMMvqqrL5xbC/exec'; 
+        const OFFERS_API = 'https://script.google.com/macros/s/AKfycby757z-QSrUzKLZt_pNGqALUbPWaXZrjRUWUmDTBPjLsREYEMCrZfmduNzOfWHXz8EqNA/exec';
 
-        async function initApp() {
+        async function init() {
             if (!navigator.geolocation) {
-                updateUI("Unsupported", "Your browser doesn't support GPS.");
+                updateStatus("Error", "GPS not supported.");
                 return;
             }
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const { latitude, longitude } = position.coords;
-                
-                // Update Header
-                document.getElementById('gps-indicator').innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-ping"></span> Live GPS';
-                
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
                 try {
-                    // 1. Verify Location against Parkandridelocations spreadsheet
-                    // Logic: Send GPS to script, it returns the City name if near a P&R
-                    const response = await fetch(`${LOCATIONS_API}?lat=${latitude}&lng=${longitude}`);
+                    // 1. Verify Location & Check for "Override" via ParkandRideLocations
+                    const response = await fetch(`${LOCATIONS_API}?lat=${lat}&lng=${lng}`);
                     const data = await response.json();
 
                     if (data.verified) {
-                        updateUI(`Offers in ${data.city}`, "Your Park & Ride location is verified.");
-                        loadOffers(data.city);
+                        const displayCity = data.override ? "Admin Mode" : `Offers in ${data.city}`;
+                        const subText = data.override ? "Override active: Showing all live offers." : `Verified at ${data.city} Park & Ride.`;
+                        
+                        updateStatus(displayCity, subText);
+                        loadOffers(data.city); // If city is "All", the next script pulls everything
                     } else {
-                        updateUI("Not at Park & Ride", "Please arrive at a verified location to unlock offers.");
-                        document.getElementById('offer-list').innerHTML = '<p class="text-center text-gray-400 py-10 italic border-2 border-dashed rounded-xl">Offers are exclusive to Park & Ride users.</p>';
+                        updateStatus("Access Restricted", "Please visit a Park & Ride to unlock offers.");
+                        document.getElementById('offer-list').innerHTML = `
+                            <div class="text-center p-10 border-2 border-dashed border-gray-200 rounded-2xl">
+                                <p class="text-gray-400 italic text-sm">Exclusive deals only available at Park & Ride locations.</p>
+                            </div>`;
                     }
-                } catch (err) {
-                    // Fallback for testing: If you aren't at a P&R yet, let's show how it looks
-                    updateUI("Demo Mode", "Could not verify P&R. (Connecting to database...)");
+                } catch (e) {
+                    updateStatus("Offline", "Unable to connect to PR4S Network.");
                 }
-            }, (error) => {
-                updateUI("GPS Required", "Please enable location services to see local deals.");
+            }, (err) => {
+                updateStatus("GPS Required", "Please enable location to see local offers.");
             });
         }
 
         async function loadOffers(city) {
             try {
-                const response = await fetch(`${OFFERS_API}?city=${city}`);
-                const offers = await response.json();
+                // 2. Pull Offers from Pending_Registrations
+                const url = (city === "All") ? OFFERS_API : `${OFFERS_API}?city=${city}`;
+                const res = await fetch(url);
+                const items = await res.json();
                 
-                const container = document.getElementById('offer-list');
-                container.innerHTML = ''; // Clear loading spinner
+                const list = document.getElementById('offer-list');
+                list.innerHTML = "";
 
-                if (offers.length === 0) {
-                    container.innerHTML = '<p class="text-center py-20 text-gray-400 italic font-medium">No active offers in this city yet.</p>';
+                if (!items || items.length === 0) {
+                    list.innerHTML = "<p class='text-center text-gray-400 py-10 italic'>No offers found in this area today.</p>";
                     return;
                 }
 
-                offers.forEach(item => {
-                    const card = `
-                        <div class="offer-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="text-[10px] uppercase tracking-widest font-bold text-gray-400">${item.category}</h4>
-                                <h3 class="text-lg font-extrabold text-gray-900">${item.businessName}</h3>
-                                <p class="text-red-600 font-bold text-sm mt-1">${item.offer}</p>
-                            </div>
-                            <div class="text-right">
-                                <button class="bg-gray-100 text-black text-[10px] font-black px-3 py-2 rounded uppercase tracking-tighter">Claim</button>
+                items.forEach(item => {
+                    list.innerHTML += `
+                        <div class="offer-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">${item.category || 'Local Deal'}</h4>
+                                    <h3 class="text-xl font-black text-gray-900 leading-tight">${item.businessName}</h3>
+                                    <p class="text-[#cc0000] font-extrabold text-md mt-2">${item.offer}</p>
+                                </div>
+                                <button class="bg-gray-100 text-[10px] font-black px-3 py-2 rounded uppercase tracking-tighter">Claim</button>
                             </div>
                         </div>
                     `;
-                    container.innerHTML += card;
                 });
-            } catch (err) {
-                console.log("Error loading offers");
+            } catch (e) {
+                console.error("Offer Load Error", e);
             }
         }
 
-        function updateUI(heading, subtext) {
+        function updateStatus(heading, sub) {
             document.getElementById('status-heading').innerText = heading;
-            document.getElementById('status-subtext').innerText = subtext;
-            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('status-subtext').innerText = sub;
+            document.getElementById('loading-spinner').style.display = 'none';
         }
 
-        window.onload = initApp;
+        init();
     </script>
 </body>
 </html>
