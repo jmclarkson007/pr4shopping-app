@@ -3,114 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PR4Shopping | Partner Registration</title>
+    <title>PR4Shopping | Local Offers Near You</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Your Exact Branding */
-        .logo { font-size: 32px; font-weight: bold; text-decoration: none; font-family: sans-serif; }
+        .logo { font-size: 28px; font-weight: bold; text-decoration: none; font-family: sans-serif; }
         .logo-pr4 { color: #cc0000; }
         .logo-shopping { color: #000; }
-        
-        body { background-color: #f9fafb; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .btn-red { background-color: #cc0000; transition: background 0.3s; }
-        .btn-red:hover { background-color: #a30000; }
+        .offer-card { border-left: 5px solid #cc0000; transition: transform 0.2s; }
+        .offer-card:active { transform: scale(0.98); }
+        .loader { border-top-color: #cc0000; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen flex flex-col">
 
-    <header class="bg-white border-b border-gray-200 py-6 text-center shadow-sm">
+    <header class="bg-white border-b border-gray-200 py-5 px-6 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <div class="logo"><span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping</span></div>
-        <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-1 font-bold">Founding Partner Program</p>
+        <div id="gps-indicator" class="flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span> Locating...
+        </div>
     </header>
 
-    <main class="max-w-xl mx-auto py-10 px-6">
-        <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
-            
-            <form id="registrationForm" class="space-y-5">
-                
-                <div class="space-y-4">
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-tight">Business Details</label>
-                    <input type="text" name="businessName" placeholder="Business Name" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
-                    <input type="email" name="email" placeholder="Contact Email" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">City Location</label>
-                        <select name="location" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
-                            <option value="">Select City...</option>
-                            <option value="Bath">Bath</option>
-                            <option value="Bristol">Bristol</option>
-                            <option value="Cambridge">Cambridge</option>
-                            <option value="Canterbury">Canterbury</option>
-                            <option value="Chelmsford">Chelmsford</option>
-                            <option value="Exeter">Exeter</option>
-                            <option value="Leeds">Leeds</option>
-                            <option value="Leicester">Leicester</option>
-                            <option value="Norwich">Norwich</option>
-                            <option value="Oxford">Oxford</option>
-                            <option value="Winchester">Winchester</option>
-                            <option value="York">York</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Category</label>
-                        <select id="category" name="category" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
-                            <option value="">Select Category...</option>
-                            <option value="Coffee">Coffee & Quick Bite</option>
-                            <option value="Dining">Dining & Drinks</option>
-                            <option value="Shopping">Everyday Shopping</option>
-                            <option value="Leisure">Experience & Leisure</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Your Offer</label>
-                    <textarea name="offer" required placeholder="Describe your single exclusive offer..." class="w-full px-4 py-3 border border-gray-300 rounded h-28 focus:border-red-600 outline-none text-sm"></textarea>
-                    <p class="text-[11px] text-gray-400 mt-2 italic">Note: This offer will be displayed to all users in your selected city.</p>
-                </div>
-
-                <button type="submit" id="submitBtn" class="w-full btn-red text-white font-bold py-4 rounded text-lg shadow-md uppercase tracking-wider mt-4">
-                    Proceed to Secure Payment
-                </button>
-            </form>
+    <main class="flex-grow max-w-lg mx-auto w-full p-4">
+        
+        <div id="status-area" class="mb-8 mt-4">
+            <h2 id="status-heading" class="text-3xl font-black text-gray-900 tracking-tight">Checking Location...</h2>
+            <p id="status-subtext" class="text-gray-500 text-sm">Please allow GPS access to verify your Park & Ride status.</p>
         </div>
 
-        <p class="text-center text-gray-400 text-[10px] mt-8 uppercase tracking-widest">
-            &copy; Perimetr Business Services (2026)
-        </p>
+        <div id="offer-list" class="space-y-4">
+            <div id="loading-spinner" class="flex flex-col items-center py-20">
+                <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full mb-4"></div>
+                <p class="text-gray-400 text-sm animate-pulse">Syncing with Park & Ride locations...</p>
+            </div>
+        </div>
+
     </main>
 
+    <footer class="p-8 bg-white border-t border-gray-100 text-center">
+        <p class="text-gray-400 text-xs uppercase tracking-[0.2em] mb-3 font-bold">Business Partners</p>
+        <a href="register.html" class="inline-block bg-black text-white text-xs font-bold py-3 px-6 rounded uppercase tracking-widest hover:bg-gray-800 transition-all">
+            Join the Founding Partner Program
+        </a>
+    </footer>
+
     <script>
-        // Your specific Stripe Links
-        const stripeLinks = {
-            "Coffee": "https://buy.stripe.com/test_9B66oGcmS32p7Mhg6d1oI02",
-            "Dining": "https://buy.stripe.com/test_6oUfZgdqW32p2rX2fn1oI03",
-            "Shopping": "https://buy.stripe.com/test_4gMfZg72y6eB5E95rz1oI04",
-            "Leisure": "https://buy.stripe.com/test_cNi28q3QmfPb1nT9HP1oI05"
-        };
+        // CONFIGURATION: Replace these with your actual Google Script Web App URLs
+        const LOCATIONS_API = 'YOUR_PARK_AND_RIDE_SCRIPT_URL'; 
+        const OFFERS_API = 'YOUR_PENDING_REGISTRATIONS_SCRIPT_URL';
 
-        document.getElementById('registrationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "Processing...";
+        async function initApp() {
+            if (!navigator.geolocation) {
+                updateUI("Unsupported", "Your browser doesn't support GPS.");
+                return;
+            }
 
-            const formData = new FormData(this);
-            const category = formData.get('category');
-            
-            // Your Apps Script URL from Pending_Registrations
-            fetch('https://script.google.com/macros/s/AKfycby757z-QSrUzKLZt_pNGqALUbPWaXZrjRUWUmDTBPjLsREYEMCrZfmduNzOfWHXz8EqNA/exec', {
-                method: 'POST',
-                mode: 'no-cors',
-                body: new URLSearchParams(formData)
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                // Update Header
+                document.getElementById('gps-indicator').innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-ping"></span> Live GPS';
+                
+                try {
+                    // 1. Verify Location against Parkandridelocations spreadsheet
+                    // Logic: Send GPS to script, it returns the City name if near a P&R
+                    const response = await fetch(`${LOCATIONS_API}?lat=${latitude}&lng=${longitude}`);
+                    const data = await response.json();
+
+                    if (data.verified) {
+                        updateUI(`Offers in ${data.city}`, "Your Park & Ride location is verified.");
+                        loadOffers(data.city);
+                    } else {
+                        updateUI("Not at Park & Ride", "Please arrive at a verified location to unlock offers.");
+                        document.getElementById('offer-list').innerHTML = '<p class="text-center text-gray-400 py-10 italic border-2 border-dashed rounded-xl">Offers are exclusive to Park & Ride users.</p>';
+                    }
+                } catch (err) {
+                    // Fallback for testing: If you aren't at a P&R yet, let's show how it looks
+                    updateUI("Demo Mode", "Could not verify P&R. (Connecting to database...)");
+                }
+            }, (error) => {
+                updateUI("GPS Required", "Please enable location services to see local deals.");
             });
+        }
 
-            setTimeout(() => {
-                window.location.href = stripeLinks[category];
-            }, 1200);
-        });
+        async function loadOffers(city) {
+            try {
+                const response = await fetch(`${OFFERS_API}?city=${city}`);
+                const offers = await response.json();
+                
+                const container = document.getElementById('offer-list');
+                container.innerHTML = ''; // Clear loading spinner
+
+                if (offers.length === 0) {
+                    container.innerHTML = '<p class="text-center py-20 text-gray-400 italic font-medium">No active offers in this city yet.</p>';
+                    return;
+                }
+
+                offers.forEach(item => {
+                    const card = `
+                        <div class="offer-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h4 class="text-[10px] uppercase tracking-widest font-bold text-gray-400">${item.category}</h4>
+                                <h3 class="text-lg font-extrabold text-gray-900">${item.businessName}</h3>
+                                <p class="text-red-600 font-bold text-sm mt-1">${item.offer}</p>
+                            </div>
+                            <div class="text-right">
+                                <button class="bg-gray-100 text-black text-[10px] font-black px-3 py-2 rounded uppercase tracking-tighter">Claim</button>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            } catch (err) {
+                console.log("Error loading offers");
+            }
+        }
+
+        function updateUI(heading, subtext) {
+            document.getElementById('status-heading').innerText = heading;
+            document.getElementById('status-subtext').innerText = subtext;
+            document.getElementById('loading-spinner').classList.add('hidden');
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
