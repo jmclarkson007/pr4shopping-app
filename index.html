@@ -7,95 +7,95 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .logo-shopping { color: #000; }
         .offer-card { border-left: 5px solid #cc0000; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 min-h-screen">
 
     <header class="py-8 text-center bg-white border-b">
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping</span>
+            <span class="logo-pr4">PR4</span><span>Shopping</span>
         </div>
     </header>
 
-    <main class="flex-grow p-5 max-w-md mx-auto w-full">
+    <main class="p-5 max-w-md mx-auto w-full">
         <div id="location-status" class="mb-8 text-center">
-            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-tight">Locating...</h2>
-            <div id="loading-spinner" class="mt-4 animate-pulse text-gray-400 text-sm">Checking for local offers...</div>
+            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-tight tracking-widest">Locating...</h2>
+            <div id="loading-spinner" class="mt-4 animate-pulse text-gray-400 text-sm italic">Verifying location access...</div>
         </div>
 
-        <div id="offers-list" class="space-y-4">
-            </div>
+        <div id="offers-list" class="space-y-4"></div>
     </main>
 
-    <footer class="p-8 text-center bg-white border-t">
-        <a href="register.html" class="text-sm font-bold text-gray-500 hover:text-red-600 transition-colors uppercase tracking-widest">
-            Partner Registration
-        </a>
+    <footer class="p-8 text-center bg-white border-t mt-auto">
+        <a href="register.html" class="text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-[0.2em]">Partner Registration</a>
     </footer>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwDBbCygo0XVBFsvUWffsmciQ03__pM70nHaSY1h_oyIqEaadRMXKgyrLBNmZ39yePQ/exec';
 
-        async function getVouchers() {
-            if (!navigator.geolocation) {
-                renderError("Geolocation not supported");
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const regSuccess = urlParams.get('reg');
+            const forcedCity = urlParams.get('city');
+
+            // 1. Check for Partner Golden Ticket (from Stripe)
+            if (regSuccess === 'success' && forcedCity) {
+                console.log("Partner access granted for: " + forcedCity);
+                fetchFromBrain(0, 0, forcedCity);
                 return;
             }
 
+            // 2. Otherwise, check GPS for the 80m rule
             navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    await fetchFromBrain(pos.coords.latitude, pos.coords.longitude);
-                },
-                async () => {
-                    // Fallback for desktop/blocked GPS to trigger Override check
-                    await fetchFromBrain(0, 0);
-                }
+                (pos) => fetchFromBrain(pos.coords.latitude, pos.coords.longitude),
+                () => fetchFromBrain(0, 0), // Fallback to Override (for your testing)
+                { timeout: 8000, enableHighAccuracy: true }
             );
         }
 
-        async function fetchFromBrain(lat, lon) {
+        async function fetchFromBrain(lat, lon, forcedCity = null) {
             try {
-                const response = await fetch(`${API_URL}?lat=${lat}&lon=${lon}`);
+                let query = `?lat=${lat}&lon=${lon}`;
+                if (forcedCity) query += `&forceCity=${forcedCity}`;
+
+                const response = await fetch(API_URL + query);
                 const data = await response.json();
                 
-                if (data.status === "success") {
+                if (data.status === "success" || data.city === "Override") {
                     displayOffers(data);
                 } else {
-                    document.getElementById('city-name').innerText = "Out of Range";
-                    document.getElementById('loading-spinner').innerText = "Please visit a Park & Ride site to see offers.";
+                    document.getElementById('city-name').innerText = "Access Restricted";
+                    document.getElementById('loading-spinner').innerHTML = "Access is only available within 80m of a Park & Ride site.";
                 }
             } catch (err) {
-                document.getElementById('city-name').innerText = "System Offline";
-                document.getElementById('loading-spinner').innerText = "Unable to connect to the offer engine.";
+                document.getElementById('city-name').innerText = "Connection Error";
+                document.getElementById('loading-spinner').innerText = "Check your internet connection.";
             }
         }
 
         function displayOffers(data) {
             const header = document.getElementById('city-name');
-            const spinner = document.getElementById('loading-spinner');
             const list = document.getElementById('offers-list');
+            document.getElementById('loading-spinner').classList.add('hidden');
 
-            // Handle Override vs City Name
             header.innerText = data.city === "Override" ? "ALL LOCATIONS" : data.city;
-            spinner.classList.add('hidden');
 
             if (!data.offers || data.offers.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-400 mt-10">No offers currently active for this area.</p>`;
+                list.innerHTML = `<div class="text-center py-10 text-gray-400">No active offers for ${data.city} yet.</div>`;
                 return;
             }
 
             list.innerHTML = data.offers.map(item => `
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">${item.category}</p>
-                    <h3 class="text-lg font-bold text-gray-900 leading-tight mb-2">${item.business}</h3>
-                    <p class="text-red-600 font-extrabold text-xl italic leading-tight">${item.offer}</p>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">${item.category}</p>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1 leading-tight">${item.business}</h3>
+                    <p class="text-red-600 font-extrabold text-xl italic">${item.offer}</p>
                 </div>
             `).join('');
         }
 
-        getVouchers();
+        init();
     </script>
 </body>
 </html>
