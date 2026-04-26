@@ -24,18 +24,29 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Register Your Business</h2>
             <form id="registrationForm" class="space-y-5">
                 <input type="text" name="businessName" placeholder="Business Name" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
-                <input type="email" name="email" placeholder="Contact Email" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <select name="location" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
-                        <option value="">Select City...</option>
-                        <option value="Bath">Bath</option><option value="Bristol">Bristol</option><option value="Cambridge">Cambridge</option><option value="Canterbury">Canterbury</option><option value="Chelmsford">Chelmsford</option><option value="Exeter">Exeter</option><option value="Leeds">Leeds</option><option value="Leicester">Leicester</option><option value="Norwich">Norwich</option><option value="Oxford">Oxford</option><option value="Winchester">Winchester</option><option value="York">York</option>
-                    </select>
-                    <select name="category" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
-                        <option value="">Category...</option>
-                        <option value="Coffee">Coffee & Quick Bite</option><option value="Dining">Dining & Drinks</option><option value="Shopping">Everyday Shopping</option><option value="Leisure">Experience & Leisure</option>
-                    </select>
+                    <input type="text" name="contactName" placeholder="Contact Name" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
+                    <input type="tel" name="phone" placeholder="Phone Number" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
                 </div>
+                <input type="email" name="email" placeholder="Contact Email" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
+
+                <input type="text" name="address1" placeholder="Address Line 1" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <select name="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
+                        <option value="">Select City...</option>
+                        <option value="Bath">Bath</option><option value="Leicester">Leicester</option>
+                        </select>
+                    <input type="text" name="postcode" placeholder="Postcode" required class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none">
+                </div>
+
+                <select name="category" id="categorySelect" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white text-sm">
+                    <option value="">Select Category...</option>
+                    <option value="Coffee">Coffee & Quick Bite</option>
+                    <option value="Dining">Dining & Drinks</option>
+                    <option value="Shopping">Everyday Shopping</option>
+                    <option value="Leisure">Experience & Leisure</option>
+                </select>
 
                 <textarea name="offer" required placeholder="Describe your exclusive offer..." class="w-full px-4 py-3 border border-gray-300 rounded h-28 focus:border-red-600 outline-none text-sm"></textarea>
 
@@ -58,18 +69,26 @@
             btn.disabled = true;
             btn.innerText = "Saving Details...";
 
+            // Gather all data into a JSON object to match your Script's JSON.parse()
             const formData = new FormData(this);
-            const category = formData.get('category');
+            const data = Object.fromEntries(formData.entries());
             
-            fetch('PASTE_YOUR_APPS_SCRIPT_URL_HERE', {
+            // Add the missing "StripeID" and "Fee" fields your script expects
+            data.stripeId = "PENDING";
+            data.fee = "1.00";
+            data.cap = "Founding Partner";
+
+            // SEND TO GOOGLE SCRIPT
+            fetch('PASTE_YOUR_PENDING_REGISTRATIONS_URL_HERE', {
                 method: 'POST',
                 mode: 'no-cors',
-                body: new URLSearchParams(formData)
+                body: JSON.stringify(data) // Sending clean JSON
             });
 
+            // Redirect to Stripe based on category
             setTimeout(() => {
-                window.location.href = stripeLinks[category];
-            }, 1200);
+                window.location.href = stripeLinks[data.category] || stripeLinks["Coffee"];
+            }, 1500);
         });
     </script>
 </body>
