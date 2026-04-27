@@ -7,16 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .offer-card { border-left: 5px solid #cc0000; transition: all 0.3s ease; }
-        .offer-card.used { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
-        .used-stamp { font-weight: 900; color: #cc0000; border: 2px solid #cc0000; padding: 2px 5px; transform: rotate(-10deg); display: inline-block; }
+        .offer-card { border-left: 5px solid #cc0000; transition: opacity 0.3s; }
+        .offer-card.used { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
     <header class="py-6 text-center bg-white border-b relative">
         <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
-        
         <div class="text-3xl font-black italic tracking-tighter">
             <span class="logo-pr4">PR4</span><span>Shopping.com</span>
         </div>
@@ -25,11 +23,9 @@
     <main class="p-5 max-w-md mx-auto w-full flex-grow">
         <div id="location-status" class="mb-8 text-center">
             <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest">Locating...</h2>
-            <div id="status-message" class="mt-4 text-gray-500 text-sm italic">Verifying GPS access...</div>
+            <div id="status-message" class="mt-4 text-gray-500 text-sm italic tracking-tight">Verifying GPS...</div>
         </div>
-
-        <div id="offers-list" class="space-y-4">
-            </div>
+        <div id="offers-list" class="space-y-4"></div>
     </main>
 
     <footer class="p-8 text-center bg-white border-t">
@@ -40,7 +36,6 @@
         const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
         const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
 
-        // Distance Calculator (Haversine)
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -52,89 +47,74 @@
         }
 
         async function init() {
-            if (!navigator.geolocation) {
-                updateUI("GPS NOT SUPPORTED", "Your browser does not support location services.");
-                return;
-            }
-
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const uLat = pos.coords.latitude;
                 const uLon = pos.coords.longitude;
 
                 try {
-                    // 1. Fetch Terminal Locations
                     const res = await fetch(`${SUPABASE_URL}Locations_Database?select=*`, {
                         headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
                     });
                     const sites = await res.json();
 
                     let currentSite = null;
+                    let debugInfo = "";
+
                     for (let site of sites) {
                         const dist = getDistance(uLat, uLon, site.Lat, site.Long);
-                        if (dist <= site.distance) { // 80m rule
+                        if (dist <= 80) { 
                             currentSite = site;
                             break;
+                        }
+                        if (site.city === "Home" || site.city === "Work") {
+                            debugInfo = `Distance to ${site.city}: ${Math.round(dist)}m`;
                         }
                     }
 
                     if (currentSite) {
-                        updateUI(currentSite.city, `You are at the ${currentSite.sitename} terminus.`);
-                        fetchOffers(currentSite.city);
+                        if (currentSite.city === "Home" || currentSite.city === "Work") {
+                            document.getElementById('city-name').innerText = "User Location Override";
+                            document.getElementById('status-message').innerText = `Testing mode active via ${currentSite.city}`;
+                            fetchOffers(true); // Fetch ALL
+                        } else {
+                            document.getElementById('city-name').innerText = `Welcome to ${currentSite.city}`;
+                            document.getElementById('status-message').innerText = "Terminus connection active.";
+                            fetchOffers(false, currentSite.city); // Fetch CITY ONLY
+                        }
                     } else {
-                        updateUI("ACCESS RESTRICTED", "You are not at the Park & Ride terminus.");
-                        document.getElementById('offers-list').innerHTML = "";
+                        document.getElementById('city-name').innerText = "Access Restricted";
+                        document.getElementById('status-message').innerText = "You are not at the Park & Ride terminus. " + debugInfo;
                     }
-
                 } catch (err) {
-                    updateUI("DATABASE ERROR", "Could not connect to the brain.");
+                    document.getElementById('city-name').innerText = "System Error";
                 }
-            }, () => {
-                updateUI("LOCATION REQUIRED", "Please enable GPS to unlock local offers.");
-            }, { enableHighAccuracy: true });
+            }, null, { enableHighAccuracy: true });
         }
 
-        function updateUI(city, msg) {
-            document.getElementById('city-name').innerText = city;
-            document.getElementById('status-message').innerText = msg;
-        }
+        async function fetchOffers(isOverride, city = "") {
+            let url = `${SUPABASE_URL}Registrations_Database?select=*`;
+            if (!isOverride) {
+                url += `&city=eq.${city}`;
+            }
 
-        async function fetchOffers(city) {
-            const res = await fetch(`${SUPABASE_URL}Registrations_Database?city=eq.${city}`, {
+            const res = await fetch(url, {
                 headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
             });
             const offers = await res.json();
             const list = document.getElementById('offers-list');
 
             if (offers.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-gray-400 uppercase text-xs tracking-widest">No active offers for ${city} today.</div>`;
+                list.innerHTML = `<div class="text-center py-10 text-gray-400 uppercase text-xs">No active offers found.</div>`;
                 return;
             }
 
             list.innerHTML = offers.map(item => `
-                <div id="offer-${item.id}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card cursor-pointer" onclick="redeemOffer('${item.id}', '${item.business_name}')">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Local Offer</p>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1 leading-tight">${item.business_name}</h3>
-                    <p class="text-red-600 font-extrabold text-xl italic">${item.offer_details}</p>
-                    <div id="code-${item.id}" class="hidden mt-3 p-2 bg-gray-100 border-dashed border-2 border-gray-300 text-center font-mono font-bold text-lg"></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Code: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">${item.city}</p>
+                    <h3 class="text-lg font-bold text-gray-900">${item.business_name}</h3>
+                    <p class="text-red-600 font-extrabold italic">${item.offer_details}</p>
                 </div>
             `).join('');
-        }
-
-        function redeemOffer(id, business) {
-            const card = document.getElementById(`offer-${id}`);
-            const codeBox = document.getElementById(`code-${id}`);
-            
-            if (card.classList.contains('used')) return;
-
-            // Generate Random Code
-            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            // Grey out and show code
-            card.classList.add('used');
-            codeBox.innerText = "CODE: " + randomCode;
-            codeBox.classList.remove('hidden');
-            
-            alert(`Show this code to ${business} to claim your offer!\n\nCODE: ${randomCode}\n\nNote: This offer is now expired.`);
         }
 
         init();
