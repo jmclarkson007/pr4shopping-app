@@ -22,9 +22,11 @@
 
     <main class="p-5 max-w-md mx-auto w-full flex-grow">
         <div id="location-status" class="mb-8 text-center">
-            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest">Locating...</h2>
-            <div id="status-message" class="mt-4 text-gray-500 text-sm italic tracking-tight">Verifying GPS...</div>
+            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest text-red-600">Locating...</h2>
+            <div id="status-message" class="mt-4 text-gray-500 text-sm italic">Verifying GPS...</div>
+            <div id="coords-display" class="mt-4 p-2 text-[10px] bg-gray-100 text-gray-400 rounded font-mono uppercase tracking-tighter"></div>
         </div>
+
         <div id="offers-list" class="space-y-4"></div>
     </main>
 
@@ -51,6 +53,8 @@
                 const uLat = pos.coords.latitude;
                 const uLon = pos.coords.longitude;
 
+                document.getElementById('coords-display').innerText = `Current GPS: ${uLat.toFixed(6)}, ${uLon.toFixed(6)}`;
+
                 try {
                     const res = await fetch(`${SUPABASE_URL}Locations_Database?select=*`, {
                         headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
@@ -58,7 +62,6 @@
                     const sites = await res.json();
 
                     let currentSite = null;
-                    let debugInfo = "";
 
                     for (let site of sites) {
                         const dist = getDistance(uLat, uLon, site.Lat, site.Long);
@@ -66,24 +69,22 @@
                             currentSite = site;
                             break;
                         }
-                        if (site.city === "Home" || site.city === "Work") {
-                            debugInfo = `Distance to ${site.city}: ${Math.round(dist)}m`;
-                        }
                     }
 
                     if (currentSite) {
-                        if (currentSite.city === "Home" || currentSite.city === "Work") {
+                        // Check for your specific Test Centre overrides
+                        if (currentSite.city === "Testcentre H" || currentSite.city === "TestCentreW") {
                             document.getElementById('city-name').innerText = "User Location Override";
-                            document.getElementById('status-message').innerText = `Testing mode active via ${currentSite.city}`;
-                            fetchOffers(true); // Fetch ALL
+                            document.getElementById('status-message').innerText = `Admin Test Mode: Viewing all city offers via ${currentSite.city}`;
+                            fetchOffers(true); 
                         } else {
                             document.getElementById('city-name').innerText = `Welcome to ${currentSite.city}`;
                             document.getElementById('status-message').innerText = "Terminus connection active.";
-                            fetchOffers(false, currentSite.city); // Fetch CITY ONLY
+                            fetchOffers(false, currentSite.city); 
                         }
                     } else {
-                        document.getElementById('city-name').innerText = "Access Restricted";
-                        document.getElementById('status-message').innerText = "You are not at the Park & Ride terminus. " + debugInfo;
+                        document.getElementById('city-name').innerText = "ACCESS RESTRICTED";
+                        document.getElementById('status-message').innerText = "You are not at a Park & Ride terminus.";
                     }
                 } catch (err) {
                     document.getElementById('city-name').innerText = "System Error";
@@ -93,9 +94,7 @@
 
         async function fetchOffers(isOverride, city = "") {
             let url = `${SUPABASE_URL}Registrations_Database?select=*`;
-            if (!isOverride) {
-                url += `&city=eq.${city}`;
-            }
+            if (!isOverride) { url += `&city=eq.${city}`; }
 
             const res = await fetch(url, {
                 headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
@@ -109,10 +108,10 @@
             }
 
             list.innerHTML = offers.map(item => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Code: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
                     <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">${item.city}</p>
-                    <h3 class="text-lg font-bold text-gray-900">${item.business_name}</h3>
-                    <p class="text-red-600 font-extrabold italic">${item.offer_details}</p>
+                    <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
+                    <p class="text-red-600 font-extrabold italic text-xl">${item.offer_details}</p>
                 </div>
             `).join('');
         }
