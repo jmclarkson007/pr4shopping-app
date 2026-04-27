@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .offer-card { border-left: 5px solid #cc0000; transition: opacity 0.3s; }
+        .offer-card { border-left: 5px solid #cc0000; transition: opacity 0.3s; cursor: pointer; }
         .offer-card.used { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
     </style>
 </head>
@@ -16,7 +16,7 @@
     <header class="py-6 text-center bg-white border-b relative">
         <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span>Shopping.com</span>
+            <span class="logo-pr4">PR4</span><span>Shopping.token</span>
         </div>
     </header>
 
@@ -72,7 +72,6 @@
                     }
 
                     if (currentSite) {
-                        // Check for your specific Test Centre overrides
                         if (currentSite.city === "Testcentre H" || currentSite.city === "TestCentreW") {
                             document.getElementById('city-name').innerText = "User Location Override";
                             document.getElementById('status-message').innerText = `Admin Test Mode: Viewing all city offers via ${currentSite.city}`;
@@ -109,9 +108,14 @@
 
             list.innerHTML = offers.map(item => `
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
-                    <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">${item.city}</p>
+                    <div class="flex justify-between items-start mb-1">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">${item.category || item.city}</p>
+                    </div>
                     <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
-                    <p class="text-red-600 font-extrabold italic text-xl">${item.offer_details}</p>
+                    <p class="text-red-600 font-extrabold italic text-xl my-2">${item.regular_offer || 'Special Offer'}</p>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-tighter mt-2 border-t pt-2">
+                        ${item.address_1}, ${item.postcode}
+                    </p>
                 </div>
             `).join('');
         }
