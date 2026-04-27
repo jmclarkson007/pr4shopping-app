@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .logo-shopping { color: #000; }
         .btn-red { background-color: #cc0000; }
     </style>
 </head>
@@ -15,7 +14,7 @@
 
     <header class="py-8 text-center bg-white border-b">
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping.com</span>
+            <span class="logo-pr4">PR4</span><span>Shopping.com</span>
         </div>
         <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-2 font-bold">Partner Program</p>
     </header>
@@ -26,14 +25,13 @@
             
             <form id="registrationForm" class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Identity</label>
-                    <input type="text" id="business_name" name="businessName" placeholder="Registered Business Name" required 
-                        class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none transition-colors">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Name</label>
+                    <input type="text" id="business_name" required class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:border-red-600">
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Operating City</label>
-                    <select id="city" name="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600">
+                    <select id="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600">
                         <option value="">Select City...</option>
                         <option value="Bath">Bath</option>
                         <option value="Bristol">Bristol</option>
@@ -47,26 +45,23 @@
                         <option value="Oxford">Oxford</option>
                         <option value="Winchester">Winchester</option>
                         <option value="York">York</option>
-                        <option value="Home">Home (Test)</option>
-                        <option value="Work">Work (Test)</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Your Exclusive Offer</label>
-                    <textarea id="offer_details" name="offer" placeholder="e.g. 20% Off Main Meals with P&R Ticket" required 
-                        class="w-full px-4 py-3 border border-gray-300 rounded h-24 focus:border-red-600 outline-none transition-colors"></textarea>
+                    <textarea id="offer_details" required class="w-full px-4 py-3 border border-gray-300 rounded h-24 outline-none focus:border-red-600"></textarea>
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full btn-red text-white font-bold py-4 rounded uppercase tracking-widest shadow-md transition-opacity hover:opacity-90">
+                <button type="submit" id="submitBtn" class="w-full btn-red text-white font-bold py-4 rounded uppercase tracking-widest shadow-md hover:opacity-90 transition-opacity">
                     Register & Pay
                 </button>
             </form>
         </div>
     </main>
 
-    <footer class="p-8 text-center mt-auto">
-        <a href="index.html" class="text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-[0.2em]">Back to Map</a>
+    <footer class="p-8 text-center">
+        <a href="index.html" class="text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest">Back to Map</a>
     </footer>
 
     <script>
@@ -77,22 +72,19 @@
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            
             btn.disabled = true;
-            btn.innerText = "Saving Details...";
+            btn.innerText = "Processing...";
 
-            // Match your Supabase column names exactly
             const payload = {
                 business_name: document.getElementById('business_name').value,
                 city: document.getElementById('city').value,
                 offer_details: document.getElementById('offer_details').value,
-                created_at: new Date().toISOString(), // The anchor for your 1-year reminder
+                created_at: new Date().toISOString(),
                 category: "Partner"
             };
 
             try {
-                // 1. Save to Supabase
-                const response = await fetch(`${SUPABASE_URL}Registrations_Database`, {
+                await fetch(`${SUPABASE_URL}Registrations_Database`, {
                     method: 'POST',
                     headers: {
                         "apikey": SUPABASE_KEY,
@@ -102,12 +94,8 @@
                     },
                     body: JSON.stringify(payload)
                 });
-
-                // 2. Redirect to Stripe regardless of DB success (don't lose the sale)
                 window.location.href = STRIPE_LINK;
-                
             } catch (error) {
-                console.error("Critical Error:", error);
                 window.location.href = STRIPE_LINK;
             }
         });
