@@ -7,92 +7,134 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .offer-card { border-left: 5px solid #cc0000; }
+        .offer-card { border-left: 5px solid #cc0000; transition: all 0.3s ease; }
+        .offer-card.used { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; }
+        .used-stamp { font-weight: 900; color: #cc0000; border: 2px solid #cc0000; padding: 2px 5px; transform: rotate(-10deg); display: inline-block; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
 
-    <header class="py-8 text-center bg-white border-b">
+    <header class="py-6 text-center bg-white border-b relative">
+        <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
+        
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span>Shopping</span>
+            <span class="logo-pr4">PR4</span><span>Shopping.com</span>
         </div>
     </header>
 
-    <main class="p-5 max-w-md mx-auto w-full">
+    <main class="p-5 max-w-md mx-auto w-full flex-grow">
         <div id="location-status" class="mb-8 text-center">
-            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-tight tracking-widest">Locating...</h2>
-            <div id="loading-spinner" class="mt-4 animate-pulse text-gray-400 text-sm italic">Verifying location access...</div>
+            <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest">Locating...</h2>
+            <div id="status-message" class="mt-4 text-gray-500 text-sm italic">Verifying GPS access...</div>
         </div>
 
-        <div id="offers-list" class="space-y-4"></div>
+        <div id="offers-list" class="space-y-4">
+            </div>
     </main>
 
-    <footer class="p-8 text-center bg-white border-t mt-auto">
-        <a href="register.html" class="text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-[0.2em]">Partner Registration</a>
+    <footer class="p-8 text-center bg-white border-t">
+        <a href="#" class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Terms & Conditions</a>
     </footer>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwH2BE3Vql7W4HzSquovq37lAthsJNV34cKn60pvkpEdec__0Zrq9HjkR2ook06M79u/exec';
+        const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
+
+        // Distance Calculator (Haversine)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
 
         async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const regSuccess = urlParams.get('reg');
-            const forcedCity = urlParams.get('city');
-
-            // 1. Check for Partner Golden Ticket (from Stripe)
-            if (regSuccess === 'success' && forcedCity) {
-                console.log("Partner access granted for: " + forcedCity);
-                fetchFromBrain(0, 0, forcedCity);
+            if (!navigator.geolocation) {
+                updateUI("GPS NOT SUPPORTED", "Your browser does not support location services.");
                 return;
             }
 
-            // 2. Otherwise, check GPS for the 80m rule
-            navigator.geolocation.getCurrentPosition(
-                (pos) => fetchFromBrain(pos.coords.latitude, pos.coords.longitude),
-                () => fetchFromBrain(0, 0), // Fallback to Override (for your testing)
-                { timeout: 8000, enableHighAccuracy: true }
-            );
-        }
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const uLat = pos.coords.latitude;
+                const uLon = pos.coords.longitude;
 
-        async function fetchFromBrain(lat, lon, forcedCity = null) {
-            try {
-                let query = `?lat=${lat}&lon=${lon}`;
-                if (forcedCity) query += `&forceCity=${forcedCity}`;
+                try {
+                    // 1. Fetch Terminal Locations
+                    const res = await fetch(`${SUPABASE_URL}Locations_Database?select=*`, {
+                        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+                    });
+                    const sites = await res.json();
 
-                const response = await fetch(API_URL + query);
-                const data = await response.json();
-                
-                if (data.status === "success" || data.city === "Override") {
-                    displayOffers(data);
-                } else {
-                    document.getElementById('city-name').innerText = "Access Restricted";
-                    document.getElementById('loading-spinner').innerHTML = "Access is only available within 80m of a Park & Ride site.";
+                    let currentSite = null;
+                    for (let site of sites) {
+                        const dist = getDistance(uLat, uLon, site.Lat, site.Long);
+                        if (dist <= site.distance) { // 80m rule
+                            currentSite = site;
+                            break;
+                        }
+                    }
+
+                    if (currentSite) {
+                        updateUI(currentSite.city, `You are at the ${currentSite.sitename} terminus.`);
+                        fetchOffers(currentSite.city);
+                    } else {
+                        updateUI("ACCESS RESTRICTED", "You are not at the Park & Ride terminus.");
+                        document.getElementById('offers-list').innerHTML = "";
+                    }
+
+                } catch (err) {
+                    updateUI("DATABASE ERROR", "Could not connect to the brain.");
                 }
-            } catch (err) {
-                document.getElementById('city-name').innerText = "Connection Error";
-                document.getElementById('loading-spinner').innerText = "Check your internet connection.";
-            }
+            }, () => {
+                updateUI("LOCATION REQUIRED", "Please enable GPS to unlock local offers.");
+            }, { enableHighAccuracy: true });
         }
 
-        function displayOffers(data) {
-            const header = document.getElementById('city-name');
+        function updateUI(city, msg) {
+            document.getElementById('city-name').innerText = city;
+            document.getElementById('status-message').innerText = msg;
+        }
+
+        async function fetchOffers(city) {
+            const res = await fetch(`${SUPABASE_URL}Registrations_Database?city=eq.${city}`, {
+                headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+            });
+            const offers = await res.json();
             const list = document.getElementById('offers-list');
-            document.getElementById('loading-spinner').classList.add('hidden');
 
-            header.innerText = data.city === "Override" ? "ALL LOCATIONS" : data.city;
-
-            if (!data.offers || data.offers.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-gray-400">No active offers for ${data.city} yet.</div>`;
+            if (offers.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-gray-400 uppercase text-xs tracking-widest">No active offers for ${city} today.</div>`;
                 return;
             }
 
-            list.innerHTML = data.offers.map(item => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">${item.category}</p>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1 leading-tight">${item.business}</h3>
-                    <p class="text-red-600 font-extrabold text-xl italic">${item.offer}</p>
+            list.innerHTML = offers.map(item => `
+                <div id="offer-${item.id}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card cursor-pointer" onclick="redeemOffer('${item.id}', '${item.business_name}')">
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Local Offer</p>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1 leading-tight">${item.business_name}</h3>
+                    <p class="text-red-600 font-extrabold text-xl italic">${item.offer_details}</p>
+                    <div id="code-${item.id}" class="hidden mt-3 p-2 bg-gray-100 border-dashed border-2 border-gray-300 text-center font-mono font-bold text-lg"></div>
                 </div>
             `).join('');
+        }
+
+        function redeemOffer(id, business) {
+            const card = document.getElementById(`offer-${id}`);
+            const codeBox = document.getElementById(`code-${id}`);
+            
+            if (card.classList.contains('used')) return;
+
+            // Generate Random Code
+            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            // Grey out and show code
+            card.classList.add('used');
+            codeBox.innerText = "CODE: " + randomCode;
+            codeBox.classList.remove('hidden');
+            
+            alert(`Show this code to ${business} to claim your offer!\n\nCODE: ${randomCode}\n\nNote: This offer is now expired.`);
         }
 
         init();
