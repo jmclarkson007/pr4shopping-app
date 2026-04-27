@@ -15,7 +15,7 @@
 
     <header class="py-8 text-center bg-white border-b">
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping</span>
+            <span class="logo-pr4">PR4</span><span class="logo-shopping">Shopping.com</span>
         </div>
         <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-2 font-bold">Partner Program</p>
     </header>
@@ -27,13 +27,13 @@
             <form id="registrationForm" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Identity</label>
-                    <input type="text" name="businessName" placeholder="Registered Business Name" required 
+                    <input type="text" id="business_name" name="businessName" placeholder="Registered Business Name" required 
                         class="w-full px-4 py-3 border border-gray-300 rounded focus:border-red-600 outline-none transition-colors">
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Operating City</label>
-                    <select name="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600">
+                    <select id="city" name="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600">
                         <option value="">Select City...</option>
                         <option value="Bath">Bath</option>
                         <option value="Bristol">Bristol</option>
@@ -47,24 +47,31 @@
                         <option value="Oxford">Oxford</option>
                         <option value="Winchester">Winchester</option>
                         <option value="York">York</option>
+                        <option value="Home">Home (Test)</option>
+                        <option value="Work">Work (Test)</option>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Your Exclusive Offer</label>
-                    <textarea name="offer" placeholder="e.g. 20% Off Main Meals with P&R Ticket" required 
+                    <textarea id="offer_details" name="offer" placeholder="e.g. 20% Off Main Meals with P&R Ticket" required 
                         class="w-full px-4 py-3 border border-gray-300 rounded h-24 focus:border-red-600 outline-none transition-colors"></textarea>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full btn-red text-white font-bold py-4 rounded uppercase tracking-widest shadow-md transition-opacity hover:opacity-90">
-                    Register & Continue
+                    Register & Pay
                 </button>
             </form>
         </div>
     </main>
 
+    <footer class="p-8 text-center mt-auto">
+        <a href="index.html" class="text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-[0.2em]">Back to Map</a>
+    </footer>
+
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH2BE3Vql7W4HzSquovq37lAthsJNV34cKn60pvkpEdec__0Zrq9HjkR2ook06M79u/exec';
+        const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
         const STRIPE_LINK = 'https://buy.stripe.com/test_6ot6p99Yw5vV0oM3cc';
 
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
@@ -74,26 +81,33 @@
             btn.disabled = true;
             btn.innerText = "Saving Details...";
 
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Add required tracking fields for your A-P columns
-            data.stripeId = "PENDING_STRIPE";
-            data.category = "Partner"; // Default category for registration
+            // Match your Supabase column names exactly
+            const payload = {
+                business_name: document.getElementById('business_name').value,
+                city: document.getElementById('city').value,
+                offer_details: document.getElementById('offer_details').value,
+                created_at: new Date().toISOString(), // The anchor for your 1-year reminder
+                category: "Partner"
+            };
 
             try {
-                // Send data to Pending_Registrations Spreadsheet via the "Brain"
-                await fetch(SCRIPT_URL, {
+                // 1. Save to Supabase
+                const response = await fetch(`${SUPABASE_URL}Registrations_Database`, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data)
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`,
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify(payload)
                 });
 
-                // Move to Stripe for the £1 payment
+                // 2. Redirect to Stripe regardless of DB success (don't lose the sale)
                 window.location.href = STRIPE_LINK;
                 
             } catch (error) {
-                // If it fails to save, we still want the money. Send to Stripe.
+                console.error("Critical Error:", error);
                 window.location.href = STRIPE_LINK;
             }
         });
