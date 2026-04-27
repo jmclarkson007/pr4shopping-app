@@ -3,78 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | PR4Shopping</title>
+    <title>Founding Partner Portal | PR4Shopping</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
-        .btn-red { background-color: #cc0000; }
-        input, select, textarea { border: 1px solid #e2e8f0 !important; }
+        .btn-red { background-color: #cc0000; border: none !important; }
+        .form-card { border-top: 5px solid #cc0000; }
+        input, select, textarea { border: 1px solid #e2e8f0 !important; transition: all 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #cc0000 !important; outline: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen font-sans">
 
-    <header class="py-8 text-center bg-white border-b shadow-sm">
-        <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span>Shopping.com</span>
+    <header class="py-10 text-center bg-white border-b shadow-sm">
+        <div class="text-4xl font-black italic tracking-tighter">
+            <span class="logo-pr4">PR4</span><span>Shopping.token</span>
         </div>
-        <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-2 font-bold">Official Partner Registration</p>
+        <div class="mt-3 inline-block bg-red-50 px-4 py-1 rounded-full border border-red-100">
+            <p class="text-[10px] tracking-[0.2em] text-red-700 uppercase font-black">Founding Partner Registration</p>
+        </div>
     </header>
 
-    <main class="max-w-2xl mx-auto py-10 px-6">
-        <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
-            <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center uppercase tracking-tight">Business Profile</h2>
+    <main class="max-w-2xl mx-auto py-12 px-6">
+        <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl form-card">
+            
+            <div id="pricing-info" class="mb-10 p-6 bg-gray-50 rounded-xl border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-900 uppercase tracking-tight mb-2">Select Your Category</h2>
+                <p id="category-desc" class="text-gray-600 text-sm leading-relaxed italic">
+                    Select a category to view your founding rate and future price cap.
+                </p>
+            </div>
             
             <form id="registrationForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Registered Business Name</label>
-                    <input type="text" id="business_name" required class="w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-red-600">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Category</label>
+                    <select id="category" required class="w-full px-4 py-3 rounded-lg bg-white font-bold text-gray-700">
+                        <option value="">-- Choose Category --</option>
+                        <option value="Coffee & Quickbite">Coffee & Quickbite (£9.99/mo)</option>
+                        <option value="Everyday Shopping">Everyday Shopping (£14.99/mo)</option>
+                        <option value="Dining & Drinks">Dining & Drinks (£19.99/mo)</option>
+                        <option value="Experience & Leisure">Experience & Leisure (£24.99/mo)</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Registered Business Name</label>
+                    <input type="text" id="business_name" required class="w-full px-4 py-3 rounded-lg">
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Contact Name</label>
-                    <input type="text" id="contact_name" required class="w-full px-4 py-3 rounded-lg outline-none">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Contact Name</label>
+                    <input type="text" id="contact_name" required class="w-full px-4 py-3 rounded-lg">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Business Email</label>
-                    <input type="email" id="email" required class="w-full px-4 py-3 rounded-lg outline-none">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Phone</label>
+                    <input type="tel" id="phone" required class="w-full px-4 py-3 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Contact Email</label>
+                    <input type="email" id="email" required class="w-full px-4 py-3 rounded-lg">
                 </div>
 
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Address Line 1</label>
+                    <input type="text" id="address_1" required class="w-full px-4 py-3 rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Address Line 2 (Optional)</label>
+                    <input type="text" id="address_2" class="w-full px-4 py-3 rounded-lg">
+                </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Operating City</label>
-                    <select id="city" required class="w-full px-4 py-3 rounded-lg bg-white outline-none">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">City</label>
+                    <select id="city" required class="w-full px-4 py-3 rounded-lg bg-white">
                         <option value="">Select City...</option>
                         <option value="Bath">Bath</option>
                         <option value="Bristol">Bristol</option>
                         <option value="Exeter">Exeter</option>
                         <option value="Oxford">Oxford</option>
-                        </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Business Category</label>
-                    <select id="category" required class="w-full px-4 py-3 rounded-lg bg-white outline-none">
-                        <option value="">Select Category...</option>
-                        <option value="Coffee & Quickbite">Coffee & Quickbite</option>
-                        <option value="Dining & Drinks">Dining & Drinks</option>
-                        <option value="Everyday Shopping">Everyday Shopping</option>
-                        <option value="Experience & Leisure">Experience & Leisure</option>
+                        <option value="Plymouth">Plymouth</option>
                     </select>
                 </div>
-
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Business Address (Street, Building, Postcode)</label>
-                    <input type="text" id="address" required class="w-full px-4 py-3 rounded-lg outline-none">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Postcode</label>
+                    <input type="text" id="postcode" required class="w-full px-4 py-3 rounded-lg uppercase">
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Your Exclusive PR4 Offer</label>
-                    <textarea id="offer_details" placeholder="What is the customer getting?" required class="w-full px-4 py-3 rounded-lg h-24 outline-none focus:ring-2 focus:ring-red-600"></textarea>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Exclusive Founding Offer</label>
+                    <textarea id="regular_offer" placeholder="e.g. 15% discount for commuters" required class="w-full px-4 py-3 rounded-lg h-24"></textarea>
                 </div>
 
-                <div class="md:col-span-2 pt-4">
-                    <button type="submit" id="submitBtn" class="w-full btn-red text-white font-black py-5 rounded-xl uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] transition-transform">
-                        Proceed to Secure Payment
+                <div class="md:col-span-2 pt-6">
+                    <button type="submit" id="submitBtn" class="w-full btn-red text-white font-black py-5 rounded-xl uppercase tracking-[0.2em] shadow-lg hover:scale-[1.01] transition-all">
+                        Secure Founding Spot
                     </button>
-                    <p class="text-center text-[9px] text-gray-400 mt-4 uppercase">Registration is active for 12 months from date of payment.</p>
                 </div>
             </form>
         </div>
@@ -85,11 +107,28 @@
         const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
 
         const STRIPE_LINKS = {
-            "Coffee & Quickbite": "https://buy.stripe.com/test_9B66oGcmS32p7Mhg6d1oI02",
-            "Dining & Drinks": "https://buy.stripe.com/test_6oUfZgdqW32p2rX2fn1oI03",
-            "Everyday Shopping": "https://buy.stripe.com/test_4gMfZg72y6eB5E95rz1oI04",
-            "Experience & Leisure": "https://buy.stripe.com/test_cNi28q3QmfPb1nT9HP1oI05"
+            "Coffee & Quickbite": "https://buy.stripe.com/test_6oUbJ072ybyV0jPf291oI06",
+            "Everyday Shopping": "https://buy.stripe.com/test_00w6oGcmSeL72rXbPX1oI07",
+            "Dining & Drinks": "https://buy.stripe.com/test_dRmeVc4Uq8mJc2x7zH1oI08",
+            "Experience & Leisure": "https://buy.stripe.com/test_dRm5kCgD89qNgiNdY"
         };
+
+        const PRICING_DATA = {
+            "Coffee & Quickbite": { rate: "£9.99", cap: "£25.00" },
+            "Everyday Shopping": { rate: "£14.99", cap: "£35.00" },
+            "Dining & Drinks": { rate: "£19.99", cap: "£45.00" },
+            "Experience & Leisure": { rate: "£24.99", cap: "£50.00" }
+        };
+
+        document.getElementById('category').addEventListener('change', function() {
+            const cat = this.value;
+            const desc = document.getElementById('category-desc');
+            if (cat) {
+                desc.innerHTML = `Founding Rate: <strong>${PRICING_DATA[cat].rate}/mo</strong> (Year 1). Year 2 capped at <strong>${PRICING_DATA[cat].cap}/mo</strong>.`;
+            } else {
+                desc.innerText = "Select a category to view your founding rate and future price cap.";
+            }
+        });
 
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -98,17 +137,26 @@
             const stripeLink = STRIPE_LINKS[category];
 
             btn.disabled = true;
-            btn.innerText = "Securing Your Data...";
+            btn.innerText = "Processing...";
 
+            // Payload matches your screenshot columns EXACTLY
             const payload = {
+                created_at: new Date().toISOString(),
                 business_name: document.getElementById('business_name').value,
+                category: category,
+                address_1: document.getElementById('address_1').value,
+                address_2: document.getElementById('address_2').value,
+                city: document.getElementById('city').value,
+                postcode: document.getElementById('postcode').value,
+                regular_offer: document.getElementById('regular_offer').value,
                 contact_name: document.getElementById('contact_name').value,
                 email: document.getElementById('email').value,
-                city: document.getElementById('city').value,
-                category: category,
-                address: document.getElementById('address').value,
-                offer_details: document.getElementById('offer_details').value,
-                created_at: new Date().toISOString()
+                phone: document.getElementById('phone').value,
+                status: 'pending_payment',
+                agreement_date: new Date().toISOString().split('T')[0],
+                fee_rate: PRICING_DATA[category].rate,
+                fee_cap: PRICING_DATA[category].cap,
+                customer_count: 0
             };
 
             try {
@@ -117,22 +165,22 @@
                     headers: {
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
                     },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // Redirect ONLY if the database confirmed the save
                     window.location.href = stripeLink;
                 } else {
-                    const err = await response.text();
-                    alert("Registration Error: " + err);
+                    const err = await response.json();
+                    alert("Sync Error: " + (err.message || "Check table columns"));
                     btn.disabled = false;
-                    btn.innerText = "Proceed to Secure Payment";
+                    btn.innerText = "Secure Founding Spot";
                 }
             } catch (error) {
-                alert("Network failure. Check your connection.");
+                alert("Connection failed.");
                 btn.disabled = false;
             }
         });
