@@ -91,9 +91,9 @@
             }, null, { enableHighAccuracy: true });
         }
 
-        async function fetchOffers(isOverride, city = "") {
+        async function fetchOffers(isOverride, cityName = "") {
             let url = `${SUPABASE_URL}Registrations_Database?select=*`;
-            if (!isOverride) { url += `&city=eq.${city}`; }
+            if (!isOverride) { url += `&city=eq.${cityName}`; }
 
             const res = await fetch(url, {
                 headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
@@ -107,20 +107,4 @@
             }
 
             list.innerHTML = offers.map(item => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
-                    <div class="flex justify-between items-start mb-1">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">${item.category || item.city}</p>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
-                    <p class="text-red-600 font-extrabold italic text-xl my-2">${item.regular_offer || 'Special Offer'}</p>
-                    <p class="text-[10px] text-gray-400 uppercase tracking-tighter mt-2 border-t pt-2">
-                        ${item.address_1}, ${item.postcode}
-                    </p>
-                </div>
-            `).join('');
-        }
-
-        init();
-    </script>
-</body>
-</html>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring
