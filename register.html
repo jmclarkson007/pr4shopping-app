@@ -16,22 +16,22 @@
         <div class="text-3xl font-black italic tracking-tighter">
             <span class="logo-pr4">PR4</span><span>Shopping.com</span>
         </div>
-        <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-2 font-bold">Partner Program</p>
+        <p class="text-[10px] tracking-[0.3em] text-gray-400 uppercase mt-2 font-bold font-sans">Partner Program</p>
     </header>
 
     <main class="max-w-md mx-auto py-10 px-6">
         <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">Business Registration</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center uppercase tracking-tight">Business Registration</h2>
             
             <form id="registrationForm" class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Name</label>
-                    <input type="text" id="business_name" required class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:border-red-600">
+                    <input type="text" id="business_name" required class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:border-red-600 shadow-sm">
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Operating City</label>
-                    <select id="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600">
+                    <select id="city" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600 shadow-sm">
                         <option value="">Select City...</option>
                         <option value="Bath">Bath</option>
                         <option value="Bristol">Bristol</option>
@@ -49,8 +49,19 @@
                 </div>
 
                 <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Category</label>
+                    <select id="category" required class="w-full px-4 py-3 border border-gray-300 rounded bg-white outline-none focus:border-red-600 shadow-sm">
+                        <option value="">Select Category...</option>
+                        <option value="Coffee & Quickbite">Coffee & Quickbite</option>
+                        <option value="Dining & Drinks">Dining & Drinks</option>
+                        <option value="Everyday Shopping">Everyday Shopping</option>
+                        <option value="Experience & Leisure">Experience & Leisure</option>
+                    </select>
+                </div>
+
+                <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Your Exclusive Offer</label>
-                    <textarea id="offer_details" required class="w-full px-4 py-3 border border-gray-300 rounded h-24 outline-none focus:border-red-600"></textarea>
+                    <textarea id="offer_details" placeholder="e.g. 20% off all main meals" required class="w-full px-4 py-3 border border-gray-300 rounded h-24 outline-none focus:border-red-600 shadow-sm"></textarea>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full btn-red text-white font-bold py-4 rounded uppercase tracking-widest shadow-md hover:opacity-90 transition-opacity">
@@ -67,20 +78,30 @@
     <script>
         const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
         const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
-        const STRIPE_LINK = 'https://buy.stripe.com/test_6ot6p99Yw5vV0oM3cc';
+
+        // Mapping categories to your specific Stripe links
+        const STRIPE_LINKS = {
+            "Coffee & Quickbite": "https://buy.stripe.com/test_9B66oGcmS32p7Mhg6d1oI02",
+            "Dining & Drinks": "https://buy.stripe.com/test_6oUfZgdqW32p2rX2fn1oI03",
+            "Everyday Shopping": "https://buy.stripe.com/test_4gMfZg72y6eB5E95rz1oI04",
+            "Experience & Leisure": "https://buy.stripe.com/test_cNi28q3QmfPb1nT9HP1oI05"
+        };
 
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            const category = document.getElementById('category').value;
+            const stripeLink = STRIPE_LINKS[category];
+
             btn.disabled = true;
-            btn.innerText = "Processing...";
+            btn.innerText = "Redirecting to Stripe...";
 
             const payload = {
                 business_name: document.getElementById('business_name').value,
                 city: document.getElementById('city').value,
+                category: category,
                 offer_details: document.getElementById('offer_details').value,
-                created_at: new Date().toISOString(),
-                category: "Partner"
+                created_at: new Date().toISOString()
             };
 
             try {
@@ -94,9 +115,11 @@
                     },
                     body: JSON.stringify(payload)
                 });
-                window.location.href = STRIPE_LINK;
+                
+                window.location.href = stripeLink;
             } catch (error) {
-                window.location.href = STRIPE_LINK;
+                // Fail-safe: don't lose the sale if Supabase hiccups
+                window.location.href = stripeLink;
             }
         });
     </script>
