@@ -16,7 +16,7 @@
     <header class="py-6 text-center bg-white border-b relative">
         <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
         <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span>Shopping.token</span>
+            <span class="logo-pr4">PR4</span><span>Shopping</span>
         </div>
     </header>
 
@@ -107,4 +107,20 @@
             }
 
             list.innerHTML = offers.map(item => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
+                    <div class="flex justify-between items-start mb-1">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">${item.category || item.city}</p>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
+                    <p class="text-red-600 font-extrabold italic text-xl my-2">${item.regular_offer || 'Special Offer'}</p>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-tighter mt-2 border-t pt-2">
+                        ${item.address_1}, ${item.city}, ${item.postcode}
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
