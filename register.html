@@ -3,36 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Founding Partner Portal | PR4Shopping</title>
+    <title>Partner Registration | PR4Shopping</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .logo-pr4 { color: #cc0000; }
         .btn-red { background-color: #cc0000; border: none !important; }
         .form-card { border-top: 5px solid #cc0000; }
-        input, select, textarea { border: 1px solid #e2e8f0 !important; transition: all 0.2s; }
+        input, select, textarea { border: 1px solid #e2e8f0 !important; }
         input:focus, select:focus, textarea:focus { border-color: #cc0000 !important; outline: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
+<body class="bg-gray-100 min-h-screen">
 
     <header class="py-10 text-center bg-white border-b shadow-sm">
         <div class="text-4xl font-black italic tracking-tighter">
             <span class="logo-pr4">PR4</span><span>Shopping.token</span>
         </div>
-        <div class="mt-3 inline-block bg-red-50 px-4 py-1 rounded-full border border-red-100">
-            <p class="text-[10px] tracking-[0.2em] text-red-700 uppercase font-black">Founding Partner Registration</p>
-        </div>
     </header>
 
     <main class="max-w-2xl mx-auto py-12 px-6">
         <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl form-card">
-            
-            <div id="pricing-info" class="mb-10 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                <h2 class="text-xl font-bold text-gray-900 uppercase tracking-tight mb-2">Select Your Category</h2>
-                <p id="category-desc" class="text-gray-600 text-sm leading-relaxed italic">
-                    Select a category to view your founding rate and future price cap.
-                </p>
-            </div>
             
             <form id="registrationForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
@@ -69,7 +59,7 @@
                     <input type="text" id="address_1" required class="w-full px-4 py-3 rounded-lg">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Address Line 2 (Optional)</label>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Address Line 2</label>
                     <input type="text" id="address_2" class="w-full px-4 py-3 rounded-lg">
                 </div>
                 <div>
@@ -89,13 +79,13 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Exclusive Founding Offer</label>
-                    <textarea id="regular_offer" placeholder="e.g. 15% discount for commuters" required class="w-full px-4 py-3 rounded-lg h-24"></textarea>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Business Offer</label>
+                    <textarea id="regular_offer" placeholder="Details of the offer..." required class="w-full px-4 py-3 rounded-lg h-24"></textarea>
                 </div>
 
                 <div class="md:col-span-2 pt-6">
-                    <button type="submit" id="submitBtn" class="w-full btn-red text-white font-black py-5 rounded-xl uppercase tracking-[0.2em] shadow-lg hover:scale-[1.01] transition-all">
-                        Secure Founding Spot
+                    <button type="submit" id="submitBtn" class="w-full btn-red text-white font-black py-5 rounded-xl uppercase tracking-[0.2em] shadow-lg">
+                        Complete Registration
                     </button>
                 </div>
             </form>
@@ -106,6 +96,7 @@
         const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
         const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
 
+        // Mappings for Stripe Redirection
         const STRIPE_LINKS = {
             "Coffee & Quickbite": "https://buy.stripe.com/test_6oUbJ072ybyV0jPf291oI06",
             "Everyday Shopping": "https://buy.stripe.com/test_00w6oGcmSeL72rXbPX1oI07",
@@ -113,33 +104,26 @@
             "Experience & Leisure": "https://buy.stripe.com/test_dRm5kCgD89qNgiNdY"
         };
 
-        const PRICING_DATA = {
-            "Coffee & Quickbite": { rate: "£9.99", cap: "£25.00" },
-            "Everyday Shopping": { rate: "£14.99", cap: "£35.00" },
-            "Dining & Drinks": { rate: "£19.99", cap: "£45.00" },
-            "Experience & Leisure": { rate: "£24.99", cap: "£50.00" }
+        // HIDDEN DATA: Looked up by script, never rendered in the HTML
+        const INTERNAL_PRICES = {
+            "Coffee & Quickbite": { rate: "9.99", cap: "25.00" },
+            "Everyday Shopping": { rate: "14.99", cap: "35.00" },
+            "Dining & Drinks": { rate: "19.99", cap: "45.00" },
+            "Experience & Leisure": { rate: "24.99", cap: "50.00" }
         };
-
-        document.getElementById('category').addEventListener('change', function() {
-            const cat = this.value;
-            const desc = document.getElementById('category-desc');
-            if (cat) {
-                desc.innerHTML = `Founding Rate: <strong>${PRICING_DATA[cat].rate}/mo</strong> (Year 1). Year 2 capped at <strong>${PRICING_DATA[cat].cap}/mo</strong>.`;
-            } else {
-                desc.innerText = "Select a category to view your founding rate and future price cap.";
-            }
-        });
 
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const category = document.getElementById('category').value;
-            const stripeLink = STRIPE_LINKS[category];
-
+            
             btn.disabled = true;
-            btn.innerText = "Processing...";
+            btn.innerText = "Synchronizing...";
 
-            // Payload matches your screenshot columns EXACTLY
+            // Retrieve price info based on category selection internally
+            const hiddenRate = INTERNAL_PRICES[category].rate;
+            const hiddenCap = INTERNAL_PRICES[category].cap;
+
             const payload = {
                 created_at: new Date().toISOString(),
                 business_name: document.getElementById('business_name').value,
@@ -154,9 +138,9 @@
                 phone: document.getElementById('phone').value,
                 status: 'pending_payment',
                 agreement_date: new Date().toISOString().split('T')[0],
-                fee_rate: PRICING_DATA[category].rate,
-                fee_cap: PRICING_DATA[category].cap,
-                customer_count: 0
+                customer_count: 0,
+                fee_rate: hiddenRate,
+                fee_cap: hiddenCap
             };
 
             try {
@@ -165,22 +149,21 @@
                     headers: {
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal"
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    window.location.href = stripeLink;
+                    // Redirect to the correct Stripe page where they finally see the price
+                    window.location.href = STRIPE_LINKS[category];
                 } else {
-                    const err = await response.json();
-                    alert("Sync Error: " + (err.message || "Check table columns"));
+                    alert("Sync Error. Please check all fields.");
                     btn.disabled = false;
-                    btn.innerText = "Secure Founding Spot";
+                    btn.innerText = "Complete Registration";
                 }
             } catch (error) {
-                alert("Connection failed.");
+                alert("Network error.");
                 btn.disabled = false;
             }
         });
