@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Portal | PR4Shopping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .logo-pr4 { color: #cc0000; }
+        .btn-red { background-color: #cc0000; transition: background 0.3s; }
+        .btn-red:hover { background-color: #a30000; }
+        .admin-card { border-top: 5px solid #cc0000; }
+        #portal-content { display: none; } 
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+
+    <header class="py-6 text-center bg-white border-b relative shadow-sm">
+        <div class="text-3xl font-black italic tracking-tighter">
+            <span class="logo-pr4">PR4</span><span>Shopping</span>
+        </div>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Merchant Administration</p>
+    </header>
+
+    <main class="p-5 max-w-lg mx-auto w-full flex-grow">
+        
+        <div id="login-section" class="bg-white p-8 rounded-xl shadow-lg admin-card mt-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center uppercase tracking-tight">Partner Login</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Registered Email</label>
+                    <input type="email" id="login-email" placeholder="owner@business.com" 
+                           class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:border-red-600 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Last 3 Digits of Phone</label>
+                    <input type="text" id="login-phone" maxlength="3" placeholder="123" 
+                           class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:border-red-600 tracking-[0.5em]">
+                </div>
+                <button onclick="attemptLogin()" class="w-full btn-red text-white font-bold py-4 rounded uppercase tracking-widest mt-4 shadow-md">
+                    Access Dashboard
+                </button>
+            </div>
+            <p id="login-error" class="text-red-600 text-xs mt-4 text-center hidden font-bold italic underline">
+                Invalid credentials. Check email or phone digits.
+            </p>
+        </div>
+
+        <div id="portal-content" class="space-y-6 pt-4">
+            
+            <div class="bg-black text-white p-6 rounded-xl shadow-lg border-l-8 border-red-600">
+                <h3 class="text-red-600 font-bold uppercase text-xs mb-2 tracking-wider">Manual Ticket Override</h3>
+                <p class="text-sm text-gray-300 mb-4">If a customer presents a valid P&R ticket, provide this code to unlock their city rewards:</p>
+                <div class="text-4xl font-mono font-black tracking-[0.2em] text-center py-4 bg-gray-900 rounded text-white border border-gray-800" id="display-override">
+                    ---
+                </div>
+                <p class="text-[9px] text-gray-500 mt-4 uppercase text-center italic leading-tight">
+                    Strictly for customers with a physical P&R ticket <br> verifying their arrival at the terminus.
+                </p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md admin-card">
+                <h3 class="text-gray-400 font-bold uppercase text-[10px] mb-4 text-center">Manage Your Live Advertisement</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Live Offer Description</label>
+                        <textarea id="edit-offer" rows="3" 
+                                  class="w-full p-4 border-2 border-red-50 font-bold text-gray-800 focus:border-red-600 focus:outline-none rounded text-lg leading-snug"></textarea>
+                    </div>
+                    <button onclick="updateOffer()" class="w-full btn-red text-white font-bold py-3 rounded uppercase text-sm shadow-sm">
+                        Update Live Ad Now
+                    </button>
+                    <p id="update-msg" class="text-green-600 text-center text-xs font-bold hidden uppercase mt-2">
+                        ✓ Offer Updated Successfully!
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gray-200 p-6 rounded-xl text-center border-2 border-dashed border-gray-300">
+                <h3 class="font-bold text-gray-600 uppercase text-xs mb-1">Marketing Assets</h3>
+                <p class="text-[10px] text-gray-500 mb-4 uppercase font-medium">Posters & Social Media Kit</p>
+                <a href="https://pr4shopping.com/partners/downloads" target="_blank" 
+                   class="inline-block bg-white border-2 border-gray-400 text-gray-600 font-bold py-2 px-6 rounded text-[10px] uppercase hover:bg-black hover:text-white hover:border-black transition-all">
+                    Open Media Kit ↗
+                </a>
+            </div>
+
+            <button onclick="location.reload()" class="w-full text-gray-400 font-bold uppercase text-[10px] py-8 hover:text-red-600 transition-colors">
+                Logout & Secure Session
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="p-8 text-center bg-white border-t">
+        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+            &copy; 2026 PERIMETR BUSINESS SERVICES
+        </div>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
+        let currentMerchant = null;
+
+        async function attemptLogin() {
+            const email = document.getElementById('login-email').value.toLowerCase().trim();
+            const phoneSuffix = document.getElementById('login-phone').value.trim();
+            const errorMsg = document.getElementById('login-error');
+
+            if(!email || !phoneSuffix) {
+                alert("Please enter your credentials.");
+                return;
+            }
+
+            try {
+                // Fetch user record by email
+                const res = await fetch(`${SUPABASE_URL}Registrations_Database?select=*&email=eq.${email}`, {
+                    headers: { 
+                        "apikey": SUPABASE_KEY, 
+                        "Authorization": `Bearer ${SUPABASE_KEY}` 
+                    }
+                });
+                const data = await res.json();
+
+                if (data.length > 0) {
+                    const merchant = data[0];
+                    
+                    // Clean and verify last 3 digits of phone
+                    const dbPhone = String(merchant.phone).replace(/\D/g,''); 
+                    if (dbPhone.endsWith(phoneSuffix)) {
+                        loadDashboard(merchant);
+                    } else {
+                        errorMsg.classList.remove('hidden');
+                    }
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (e) {
+                alert("Database connection error. Check your internet.");
+            }
+        }
+
+        function loadDashboard(merchant) {
+            currentMerchant = merchant;
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('portal-content').style.display = 'block';
+
+            // Populate current live data
+            document.getElementById('edit-offer').value = merchant.regular_offer || "";
+            document.getElementById('display-override').innerText = merchant.override_code || "NOT-SET";
+            
+            // Scroll to top of dashboard
+            window.scrollTo(0, 0);
+        }
+
+        async function updateOffer() {
+            const newOffer = document.getElementById('edit-offer').value;
+            const msg = document.getElementById('update-msg');
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}Registrations_Database?id=eq.${currentMerchant.id}`, {
+                    method: 'PATCH',
+                    headers: { 
+                        "apikey": SUPABASE_KEY, 
+                        "Authorization": `Bearer ${SUPABASE_KEY}`,
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify({ regular_offer: newOffer })
+                });
+
+                if (res.ok) {
+                    msg.classList.remove('hidden');
+                    setTimeout(() => msg.classList.add('hidden'), 3500);
+                } else {
+                    alert("Update failed. Please try again.");
+                }
+            } catch (e) {
+                alert("Network error: Could not update offer.");
+            }
+        }
+    </script>
+</body>
+</html>
