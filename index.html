@@ -9,9 +9,19 @@
         .logo-pr4 { color: #cc0000; }
         .offer-card { border-left: 5px solid #cc0000; transition: opacity 0.3s; cursor: pointer; }
         .offer-card.used { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+        /* Modal Styles */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 400px; w-full: 100%; text-align: center; border-top: 6px solid #cc0000; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <div id="offer-modal" class="modal-overlay flex">
+        <div class="modal-content shadow-2xl">
+            <div id="modal-body">
+                </div>
+        </div>
+    </div>
 
     <header class="py-6 text-center bg-white border-b relative">
         <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
@@ -31,6 +41,7 @@
     </main>
 
     <footer class="p-8 text-center bg-white border-t">
+        <div class="mb-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest">&copy; 2026 PERIMETR BUSINESS SERVICES</div>
         <a href="#" class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Terms & Conditions</a>
     </footer>
 
@@ -52,7 +63,6 @@
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const uLat = pos.coords.latitude;
                 const uLon = pos.coords.longitude;
-
                 document.getElementById('coords-display').innerText = `Current GPS: ${uLat.toFixed(6)}, ${uLon.toFixed(6)}`;
 
                 try {
@@ -60,7 +70,6 @@
                         headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
                     });
                     const sites = await res.json();
-
                     let currentSite = null;
 
                     for (let site of sites) {
@@ -73,8 +82,8 @@
 
                     if (currentSite) {
                         if (currentSite.city === "Testcentre H" || currentSite.city === "TestCentreW") {
-                            document.getElementById('city-name').innerText = "User Location Override";
-                            document.getElementById('status-message').innerText = `Admin Test Mode: Viewing all city offers via ${currentSite.city}`;
+                            document.getElementById('city-name').innerText = "Admin Override";
+                            document.getElementById('status-message').innerText = "Admin Test Mode Active.";
                             fetchOffers(true); 
                         } else {
                             document.getElementById('city-name').innerText = `Welcome to ${currentSite.city}`;
@@ -100,26 +109,86 @@
             });
             const offers = await res.json();
             const list = document.getElementById('offers-list');
+            const todayKey = new Date().toISOString().split('T')[0];
 
             if (offers.length === 0) {
                 list.innerHTML = `<div class="text-center py-10 text-gray-400 uppercase text-xs">No active offers found.</div>`;
                 return;
             }
 
-            list.innerHTML = offers.map(item => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card" onclick="this.classList.add('used'); alert('Claimed: ' + Math.random().toString(36).substring(2, 8).toUpperCase())">
-                    <div class="flex justify-between items-start mb-1">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">${item.category || item.city}</p>
+            list.innerHTML = offers.map(item => {
+                const isUsed = localStorage.getItem(`used_${item.id}_${todayKey}`);
+                const cityCode = item.postcode.substring(0, 2).toUpperCase();
+                
+                return `
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 offer-card ${isUsed ? 'used' : ''}" 
+                         onclick="openRedemptionModal('${cityCode}', '${item.business_name}', '${item.id}')">
+                        <div class="flex justify-between items-start mb-1">
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">${item.category || item.city}</p>
+                            ${isUsed ? '<span class="text-[9px] font-black text-red-600 uppercase">Redeemed Today</span>' : ''}
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
+                        <p class="text-red-600 font-extrabold italic text-xl my-2">${item.regular_offer || 'Special Offer'}</p>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-tighter mt-2 border-t pt-2">
+                            ${item.address_1}, ${item.city}, ${item.postcode}
+                        </p>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 leading-tight">${item.business_name}</h3>
-                    <p class="text-red-600 font-extrabold italic text-xl my-2">${item.regular_offer || 'Special Offer'}</p>
-                    <p class="text-[10px] text-gray-400 uppercase tracking-tighter mt-2 border-t pt-2">
-                        ${item.address_1}, ${item.city}, ${item.postcode}
-                    </p>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        // REDEMPTION LOGIC
+        function openRedemptionModal(cityCode, businessName, offerId) {
+            const modal = document.getElementById('offer-modal');
+            const body = document.getElementById('modal-body');
+            modal.style.display = 'flex';
+
+            body.innerHTML = `
+                <h2 class="text-xl font-bold mb-4">Verification</h2>
+                <p class="text-gray-600 mb-6 font-medium">Are you in the store at the checkout?</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="confirmRedemption('${cityCode}', '${offerId}')" class="bg-red-600 text-white font-bold py-3 rounded-lg uppercase tracking-widest">Yes</button>
+                    <button onclick="cancelRedemption()" class="bg-gray-200 text-gray-800 font-bold py-3 rounded-lg uppercase tracking-widest">No</button>
+                </div>
+            `;
+        }
+
+        function confirmRedemption(cityCode, offerId) {
+            const d = new Date();
+            const dateStr = d.getDate().toString().padStart(2, '0') + (d.getMonth() + 1).toString().padStart(2, '0');
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const code = `PR4S-${cityCode}-${randomNum}-${dateStr}`;
+            
+            const todayKey = new Date().toISOString().split('T')[0];
+            localStorage.setItem(`used_${offerId}_${todayKey}`, "true");
+
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-2">Validated Code</h2>
+                <p class="text-gray-600 text-xs mb-4">Show this to the cashier now:</p>
+                <div class="bg-gray-100 border-2 border-dashed border-gray-400 p-4 mb-6">
+                    <span class="text-2xl font-black tracking-tighter text-gray-900">${code}</span>
+                </div>
+                <button onclick="closeModal()" class="w-full bg-black text-white font-bold py-3 rounded-lg uppercase">Done</button>
+            `;
+        }
+
+        function cancelRedemption() {
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <p class="text-gray-800 font-bold mb-6">Click when you are about to purchase.</p>
+                <button onclick="closeModal()" class="w-full bg-black text-white font-bold py-3 rounded-lg uppercase">OK</button>
+            `;
+        }
+
+        function closeModal() {
+            document.getElementById('offer-modal').style.display = 'none';
+            // Refresh UI to show the card as greyed out
+            location.reload();
+        }
+
+        // Initialize modal as hidden
+        document.getElementById('offer-modal').style.display = 'none';
         init();
     </script>
 </body>
