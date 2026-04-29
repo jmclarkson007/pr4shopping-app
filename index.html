@@ -9,22 +9,20 @@
         .logo-pr4 { color: #cc0000; }
         .offer-card { border-left: 5px solid #cc0000; transition: opacity 0.3s; cursor: pointer; }
         .offer-card.used { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
-        /* Modal Styles */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 400px; w-full: 100%; text-align: center; border-top: 6px solid #cc0000; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 400px; width: 100%; text-align: center; border-top: 6px solid #cc0000; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
-    <div id="offer-modal" class="modal-overlay flex">
+    <div id="offer-modal" class="modal-overlay">
         <div class="modal-content shadow-2xl">
-            <div id="modal-body">
-                </div>
+            <div id="modal-body"></div>
         </div>
     </div>
 
     <header class="py-6 text-center bg-white border-b relative">
-        <a href="register.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Registration</a>
+        <a href="portal.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Portal</a>
         <div class="text-3xl font-black italic tracking-tighter">
             <span class="logo-pr4">PR4</span><span>Shopping</span>
         </div>
@@ -34,6 +32,13 @@
         <div id="location-status" class="mb-8 text-center">
             <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest text-red-600">Locating...</h2>
             <div id="status-message" class="mt-4 text-gray-500 text-sm italic">Verifying GPS...</div>
+            
+            <div id="manual-trigger" class="hidden mt-4">
+                <button onclick="handleManualOverride()" class="text-[10px] font-bold text-red-600 uppercase border border-red-200 px-4 py-2 rounded-full hover:bg-red-50">
+                    At checkout with a P&R Ticket? Tap here.
+                </button>
+            </div>
+
             <div id="coords-display" class="mt-4 p-2 text-[10px] bg-gray-100 text-gray-400 rounded font-mono uppercase tracking-tighter"></div>
         </div>
 
@@ -60,6 +65,17 @@
         }
 
         async function init() {
+            const todayKey = new Date().toISOString().split('T')[0];
+            const savedOverrideCity = localStorage.getItem(`override_city_${todayKey}`);
+
+            // Check if manual override was already done today
+            if (savedOverrideCity) {
+                document.getElementById('city-name').innerText = `Welcome to ${savedOverrideCity}`;
+                document.getElementById('status-message').innerText = "Verified via P&R Ticket.";
+                fetchOffers(false, savedOverrideCity);
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const uLat = pos.coords.latitude;
                 const uLon = pos.coords.longitude;
@@ -93,11 +109,38 @@
                     } else {
                         document.getElementById('city-name').innerText = "ACCESS RESTRICTED";
                         document.getElementById('status-message').innerText = "You are not at a Park & Ride terminus.";
+                        document.getElementById('manual-trigger').classList.remove('hidden');
                     }
                 } catch (err) {
                     document.getElementById('city-name').innerText = "System Error";
                 }
             }, null, { enableHighAccuracy: true });
+        }
+
+        async function handleManualOverride() {
+            const code = prompt("Cashier: Please enter your 9-character Business Override Code:");
+            if (!code) return;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}Registrations_Database?select=*`, {
+                    headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+                });
+                const merchants = await res.json();
+                
+                // Check if any registered business has this code
+                const merchant = merchants.find(m => m.override_code === code.toUpperCase());
+
+                if (merchant) {
+                    const todayKey = new Date().toISOString().split('T')[0];
+                    localStorage.setItem(`override_city_${todayKey}`, merchant.city);
+                    alert("Ticket Verified. Local offers unlocked.");
+                    location.reload();
+                } else {
+                    alert("Invalid Code. Please present a valid Park & Ride ticket to staff.");
+                }
+            } catch (e) {
+                alert("Error verifying code.");
+            }
         }
 
         async function fetchOffers(isOverride, cityName = "") {
@@ -137,7 +180,6 @@
             }).join('');
         }
 
-        // REDEMPTION LOGIC
         function openRedemptionModal(cityCode, businessName, offerId) {
             const modal = document.getElementById('offer-modal');
             const body = document.getElementById('modal-body');
@@ -164,7 +206,7 @@
 
             const body = document.getElementById('modal-body');
             body.innerHTML = `
-                <h2 class="text-sm font-bold text-gray-400 uppercase mb-2">Validated Code</h2>
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-2 text-center w-full">Validated Code</h2>
                 <p class="text-gray-600 text-xs mb-4">Show this to the cashier now:</p>
                 <div class="bg-gray-100 border-2 border-dashed border-gray-400 p-4 mb-6">
                     <span class="text-2xl font-black tracking-tighter text-gray-900">${code}</span>
@@ -183,12 +225,9 @@
 
         function closeModal() {
             document.getElementById('offer-modal').style.display = 'none';
-            // Refresh UI to show the card as greyed out
             location.reload();
         }
 
-        // Initialize modal as hidden
-        document.getElementById('offer-modal').style.display = 'none';
         init();
     </script>
 </body>
