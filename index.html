@@ -21,15 +21,20 @@
         </div>
     </div>
 
-    <header class="py-6 text-center bg-white border-b relative">
-        <a href="portal.html" class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-widest border border-gray-200 px-2 py-1 rounded">Business Portal</a>
-        <div class="text-3xl font-black italic tracking-tighter">
-            <span class="logo-pr4">PR4</span><span>Shopping</span>
+    <nav class="bg-white border-b shadow-sm">
+        <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+            <div class="text-2xl font-black italic tracking-tighter">
+                <span class="logo-pr4">PR4</span><span>Shopping</span>
+            </div>
+            <div class="flex gap-3">
+                <a href="register.html" class="text-[10px] font-bold text-red-600 border border-red-200 px-3 py-2 rounded uppercase tracking-tighter hover:bg-red-50">Register</a>
+                <a href="portal.html" class="text-[10px] font-bold text-white bg-black px-3 py-2 rounded uppercase tracking-tighter hover:bg-gray-800">Merchant Portal</a>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <main class="p-5 max-w-md mx-auto w-full flex-grow">
-        <div id="location-status" class="mb-8 text-center">
+        <div id="location-status" class="mb-8 text-center pt-4">
             <h2 id="city-name" class="text-2xl font-bold text-gray-800 uppercase tracking-widest text-red-600">Locating...</h2>
             <div id="status-message" class="mt-4 text-gray-500 text-sm italic">Verifying GPS...</div>
             
@@ -45,9 +50,12 @@
         <div id="offers-list" class="space-y-4"></div>
     </main>
 
-    <footer class="p-8 text-center bg-white border-t">
+    <footer class="p-8 text-center bg-white border-t mt-10">
         <div class="mb-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest">&copy; 2026 PERIMETR BUSINESS SERVICES</div>
-        <a href="#" class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Terms & Conditions</a>
+        <div class="flex justify-center gap-6">
+            <a href="#" class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Terms</a>
+            <a href="register.html" class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Add Business</a>
+        </div>
     </footer>
 
     <script>
@@ -68,7 +76,6 @@
             const todayKey = new Date().toISOString().split('T')[0];
             const savedOverrideCity = localStorage.getItem(`override_city_${todayKey}`);
 
-            // Check if manual override was already done today
             if (savedOverrideCity) {
                 document.getElementById('city-name').innerText = `Welcome to ${savedOverrideCity}`;
                 document.getElementById('status-message').innerText = "Verified via P&R Ticket.";
@@ -126,8 +133,6 @@
                     headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
                 });
                 const merchants = await res.json();
-                
-                // Check if any registered business has this code
                 const merchant = merchants.find(m => m.override_code === code.toUpperCase());
 
                 if (merchant) {
@@ -212,14 +217,6 @@
                     <span class="text-2xl font-black tracking-tighter text-gray-900">${code}</span>
                 </div>
                 <button onclick="closeModal()" class="w-full bg-black text-white font-bold py-3 rounded-lg uppercase">Done</button>
-            `;
-        }
-
-        function cancelRedemption() {
-            const body = document.getElementById('modal-body');
-            body.innerHTML = `
-                <p class="text-gray-800 font-bold mb-6">Click when you are about to purchase.</p>
-                <button onclick="closeModal()" class="w-full bg-black text-white font-bold py-3 rounded-lg uppercase">OK</button>
             `;
         }
 
