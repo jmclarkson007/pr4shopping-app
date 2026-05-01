@@ -68,9 +68,16 @@
                         <option value="">Select City...</option>
                         <option value="Bath">Bath</option>
                         <option value="Bristol">Bristol</option>
+                        <option value="Cambridge">Cambridge</option>
+                        <option value="Canterbury">Canterbury</option>
+                        <option value="Chelmsford">Chelmsford</option>
                         <option value="Exeter">Exeter</option>
+                        <option value="Leeds">Leeds</option>
+                        <option value="Leicester">Leicester</option>
+                        <option value="Norwich">Norwich</option>
                         <option value="Oxford">Oxford</option>
-                        <option value="Plymouth">Plymouth</option>
+                        <option value="Winchester">Winchester</option>
+                        <option value="York">York</option>
                     </select>
                 </div>
                 <div>
@@ -96,7 +103,6 @@
         const SUPABASE_URL = "https://cocjolczajrnikiwolly.supabase.co/rest/v1/";
         const SUPABASE_KEY = "sb_publishable_AEPtmbQAf0U4_1gXLsAoLA_-HOM-3_w";
 
-        // Mappings for Stripe Redirection
         const STRIPE_LINKS = {
             "Coffee & Quickbite": "https://buy.stripe.com/test_6oUbJ072ybyV0jPf291oI06",
             "Everyday Shopping": "https://buy.stripe.com/test_00w6oGcmSeL72rXbPX1oI07",
@@ -104,7 +110,6 @@
             "Experience & Leisure": "https://buy.stripe.com/test_dRm5kCgD89qNgiNdY"
         };
 
-        // HIDDEN DATA: Looked up by script, never rendered in the HTML
         const INTERNAL_PRICES = {
             "Coffee & Quickbite": { rate: "9.99", cap: "25.00" },
             "Everyday Shopping": { rate: "14.99", cap: "35.00" },
@@ -120,18 +125,16 @@
             btn.disabled = true;
             btn.innerText = "Synchronizing...";
 
-            // Retrieve price info based on category selection internally
             const hiddenRate = INTERNAL_PRICES[category].rate;
             const hiddenCap = INTERNAL_PRICES[category].cap;
 
+            // CORRECTED PAYLOAD: Postcode removed to match your Supabase columns
             const payload = {
-                created_at: new Date().toISOString(),
                 business_name: document.getElementById('business_name').value,
                 category: category,
                 address_1: document.getElementById('address_1').value,
                 address_2: document.getElementById('address_2').value,
                 city: document.getElementById('city').value,
-                postcode: document.getElementById('postcode').value,
                 regular_offer: document.getElementById('regular_offer').value,
                 contact_name: document.getElementById('contact_name').value,
                 email: document.getElementById('email').value,
@@ -149,20 +152,23 @@
                     headers: {
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
                     },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // Redirect to the correct Stripe page where they finally see the price
                     window.location.href = STRIPE_LINKS[category];
                 } else {
-                    alert("Sync Error. Please check all fields.");
+                    const errData = await response.json();
+                    console.error("Supabase Error:", errData);
+                    alert("Sync Error: " + (errData.message || "Please check all fields."));
                     btn.disabled = false;
                     btn.innerText = "Complete Registration";
                 }
             } catch (error) {
+                console.error("Network Error:", error);
                 alert("Network error.");
                 btn.disabled = false;
             }
